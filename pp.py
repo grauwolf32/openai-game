@@ -48,6 +48,9 @@ def getAngle(v1,v2):
         
     return alpha 
 
+def scalar(v1, v2):
+    return v1.x*v2.x + v1.y*v2.y
+
         
 class Unit(object):
     def __init__(self, max_ds, max_dw, sprite, position, direction,k):
@@ -119,8 +122,14 @@ class World(object):
         
         distance = (unit1.position - unit2.position).abs()
         angle = getAngle(unit1.direction, unit2.direction)
+
+        if scalar(unit1.direction, unit2.direction) < 0.0:
+            state = 0.0
+        else:
+            target = (unit2.position - unit1.position)
+            state = np.sign(scalar(unit2.direction, target))
         
-        return distance, angle
+        return distance, angle, state
     
     def draw(self, font):
         self.surface.fill((255,255,255))
@@ -130,7 +139,7 @@ class World(object):
             image.set_colorkey((0,128,0))
             self.surface.blit(image, (unit.position.x-height,unit.position.y-height))
                                
-        distance, angle = self.getState()
+        distance, angle, state = self.getState()
         distance = int(distance*10)/10.0
         angle = int(10*(180*angle/np.pi))/10.0
         
@@ -140,6 +149,37 @@ class World(object):
         stat = font.render("U1 Speed: {} U2 Speed: {}".format(int(100*self.units[0].speed.abs())/100.0,int(100*self.units[0].speed.abs())/100.0), True, (0,0,0))
         self.surface.blit(stat, (self.screen[0]-200,30))
         pg.display.flip()
+
+class Strategy(object):
+     pass
+
+class SimpleStrategy(Strategy):
+    def __init__(self, unit):
+        self.alpha = 0.0
+        self.beta = 0.0
+        self.unit = unit
+
+    def implementStrategy(self, state):
+        distance = state[0]
+        angle = state[1]
+        status = state[2]
+
+        if distance > 250:
+            self.alpha = -1.0
+            self.beta = 0.02
+        
+        else:
+            if status <= 0.0:
+                if angle / self.unit.max_dw > 1.0:
+                    self.beta = 1.0 * np.sign(angle)
+                else:
+                    self.beta = 0.9 * (angle / self.unit.max_dw) * np.sign(angle)
+            else:
+                self.beta = 0.0
+
+            self.alpha = -1.0
+
+        return self.alpha, self.beta 
 
 def main():
     pg.init()
@@ -154,12 +194,14 @@ def main():
     controller1 = Controller()
     unit1 = Unit(max_ds=5.0, max_dw=5.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.013)
     
-    start_position = Vec(screen[0]-50,screen[1]-50)
+    start_position = Vec(screen[0]/2.0,screen[1]/2.0)
     controller2 = Controller()
     unit2 = Unit(max_ds=5.0, max_dw=4.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.018)
     
     world = World([unit1,unit2],[controller1,controller2], surface, screen)
     clock = pg.time.Clock()
+
+    s = SimpleStrategy(unit2)
     
     while True:
         keystate = pg.key.get_pressed()
@@ -172,10 +214,14 @@ def main():
         if keystate[K_LEFT]: controller1.beta = 0.05
         if keystate[K_RIGHT]: controller1.beta = -0.05
                 
-        if keystate[K_w]: controller2.alpha = -1.0
-        if keystate[K_s]: controller2.alpha = 1.0
-        if keystate[K_a]: controller2.beta = 0.05
-        if keystate[K_d]: controller2.beta = -0.05
+        #if keystate[K_w]: controller2.alpha = -1.0
+        #if keystate[K_s]: controller2.alpha = 1.0
+        #if keystate[K_a]: controller2.beta = 0.05
+        #if keystate[K_d]: controller2.beta = -0.05
+
+        alpha, beta = s.implementStrategy(world.getState())
+        controller2.alpha = alpha
+        controller2.beta = beta
                 
         world.tick(1.0/60.0)
         world.draw(font)
