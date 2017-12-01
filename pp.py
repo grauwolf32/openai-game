@@ -123,11 +123,10 @@ class World(object):
         distance = (unit1.position - unit2.position).abs()
         angle = getAngle(unit1.direction, unit2.direction)
 
-        if scalar(unit1.direction, unit2.direction) < 0.0:
-            state = 0.0
-        else:
-            target = (unit2.position - unit1.position)
-            state = np.sign(scalar(unit2.direction, target))
+        state1 = np.sign(scalar((unit2.position-unit1.position),unit1.direction))
+        state2 = np.sign(scalar((unit1.position-unit2.position),unit2.direction))
+
+        state = (state1, state2)
         
         return distance, angle, state
     
@@ -143,11 +142,11 @@ class World(object):
         distance = int(distance*10)/10.0
         angle = int(10*(180*angle/np.pi))/10.0
         
-        info = font.render("Distance: {} Angle: {}".format(distance,angle), True, (0,0,0))
-        self.surface.blit(info, (self.screen[0]-200,10))
+        info = font.render("Distance: {} Angle: {} State: {} {}".format(distance,angle, state[0], state[1]), True, (0,0,0))
+        self.surface.blit(info, (self.screen[0]-240,10))
 
         stat = font.render("U1 Speed: {} U2 Speed: {}".format(int(100*self.units[0].speed.abs())/100.0,int(100*self.units[0].speed.abs())/100.0), True, (0,0,0))
-        self.surface.blit(stat, (self.screen[0]-200,30))
+        self.surface.blit(stat, (self.screen[0]-240,30))
         pg.display.flip()
 
 class Strategy(object):
@@ -163,23 +162,35 @@ class SimpleStrategy(Strategy):
         distance = state[0]
         angle = state[1]
         status = state[2]
-
-        if distance > 250:
-            self.alpha = -1.0
-            self.beta = 0.02
         
-        else:
-            if status <= 0.0:
-                if angle / self.unit.max_dw > 1.0:
-                    self.beta = 1.0 * np.sign(angle)
-                else:
-                    self.beta = 0.9 * (angle / self.unit.max_dw) * np.sign(angle)
-            else:
-                self.beta = 0.0
+        self.alpha = -1.0
+        self.beta = 0.02
 
-            self.alpha = -1.0
+        if distance < 250:
+            if status[0] == 1.0 and status[1]==-1.0:
+                self.beta = -0.4 * np.sign(angle)
+                self.alpha = -1.0
+                return self.alpha, self.beta
 
-        return self.alpha, self.beta 
+            if status[0] == -1.0 and status[1]==-1.0:
+                self.beta = 0.4 * np.sign(angle)
+                self.alpha = -0.5
+                return self.alpha, self.beta
+            
+            if status[0] == 1.0 and status[1]==1.0:
+                self.beta = -0.3*np.sign(angle)
+                self.alpha = -1.0
+                return self.alpha, self.beta
+
+            if status[0] == -1.0 and status[1]==1.0:
+                self.beta = 0.8 * (angle / self.unit.max_dw)
+                self.alpha = -1.0
+                return self.alpha, self.beta
+            
+            return self.alpha, self.beta
+
+        return self.alpha, self.beta
+
 
 def main():
     pg.init()
@@ -192,7 +203,7 @@ def main():
     
     start_position = Vec(50,50)
     controller1 = Controller()
-    unit1 = Unit(max_ds=5.0, max_dw=5.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.013)
+    unit1 = Unit(max_ds=6.0, max_dw=5.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.013)
     
     start_position = Vec(screen[0]/2.0,screen[1]/2.0)
     controller2 = Controller()
@@ -213,15 +224,15 @@ def main():
         if keystate[K_DOWN]: controller1.alpha = 1.0
         if keystate[K_LEFT]: controller1.beta = 0.05
         if keystate[K_RIGHT]: controller1.beta = -0.05
-                
-        #if keystate[K_w]: controller2.alpha = -1.0
-        #if keystate[K_s]: controller2.alpha = 1.0
-        #if keystate[K_a]: controller2.beta = 0.05
-        #if keystate[K_d]: controller2.beta = -0.05
 
         alpha, beta = s.implementStrategy(world.getState())
         controller2.alpha = alpha
         controller2.beta = beta
+
+        if keystate[K_w]: controller2.alpha = -1.0
+        if keystate[K_s]: controller2.alpha = 1.0
+        if keystate[K_a]: controller2.beta = 0.05
+        if keystate[K_d]: controller2.beta = -0.05
                 
         world.tick(1.0/60.0)
         world.draw(font)
