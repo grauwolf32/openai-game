@@ -2,6 +2,7 @@ import pygame as pg
 import numpy as np
 import sys
 
+from random import randint
 from pygame.locals import *
 
 class Vec(object):
@@ -33,13 +34,28 @@ class Vec(object):
     def abs(self):
         return np.sqrt(self.x**2 + self.y**2)
     
+    def norm(self):
+        abs_ = self.abs()
+
+        if abs > 1e-6:
+            return Vec(self.x / abs_, self.y / abs_)
+
+        else:
+            return Vec(0.0,0.0)            
+            
+    
         
 def getAngle(v1,v2):
     scalar = v1.x*v2.x + v1.y*v2.y
     vector = v1.x*v2.y - v1.y*v2.x
+
+    if np.fabs(v1.abs() * v2.abs()) < 10e-6:
+        return 0.0
     
     scalar /= (v1.abs() * v2.abs())
     vector /= (v1.abs() * v2.abs())
+
+
     alpha = np.arccos(scalar)
     beta  = np.arcsin(vector)
     
@@ -71,7 +87,7 @@ class Unit(object):
     
     def updateState(self, alpha, beta, dt):
         a = alpha*self.max_ds*self.direction - self.k*self.speed.abs()*self.speed
-        self.direction.rot(-self.dw*dt)
+        self.direction.rot(self.dw*dt)
         self.position = self.position + self.speed*dt
         self.speed = self.speed + dt*self.acceleration
         self.acceleration = a
@@ -133,11 +149,16 @@ class World(object):
     def draw(self, font):
         self.surface.fill((255,255,255))
         for unit in self.units:
-            image = pg.transform.rotate(unit.sprite,180.0*unit.phi/np.pi) 
+            image = pg.transform.rotate(unit.sprite,-180.0*unit.phi/np.pi) 
             height = image.get_height()/2.0
             image.set_colorkey((0,128,0))
             self.surface.blit(image, (unit.position.x-height,unit.position.y-height))
-                               
+            
+#            dir_st = unit.position
+#            dir_end = unit.position + 50*(unit.direction)
+#            dir_ = pg.draw.line(self.surface, (123.0,128.0,0.0), [dir_st.x,dir_st.y], [dir_end.x,dir_end.y], 5)
+            
+
         distance, angle, state = self.getState()
         distance = int(distance*10)/10.0
         angle = int(10*(180*angle/np.pi))/10.0
@@ -145,17 +166,19 @@ class World(object):
         info = font.render("Distance: {} Angle: {} State: {} {}".format(distance,angle, state[0], state[1]), True, (0,0,0))
         self.surface.blit(info, (self.screen[0]-240,10))
 
-        stat = font.render("U1 Speed: {} U2 Speed: {}".format(int(100*self.units[0].speed.abs())/100.0,int(100*self.units[0].speed.abs())/100.0), True, (0,0,0))
+        stat = font.render("U1 Speed: {} U2 Speed: {}".format(int(100*self.units[0].speed.abs())/100.0,int(100*self.units[1].speed.abs())/100.0), True, (0,0,0))
         self.surface.blit(stat, (self.screen[0]-240,30))
+
         pg.display.flip()
 
 class Strategy(object):
      pass
 
 class SimpleStrategy(Strategy):
-    def __init__(self, unit):
+    def __init__(self, unit,  attacker_radious=250):
         self.alpha = 0.0
         self.beta = 0.0
+        self.attacker_radious = attacker_radious
         self.unit = unit
 
     def implementStrategy(self, state):
@@ -166,7 +189,7 @@ class SimpleStrategy(Strategy):
         self.alpha = -1.0
         self.beta = 0.02
 
-        if distance < 250:
+        if distance < self.attacker_radious:
             if status[0] == 1.0 and status[1]==-1.0:
                 self.beta = -0.4 * np.sign(angle)
                 self.alpha = -1.0
@@ -191,8 +214,60 @@ class SimpleStrategy(Strategy):
 
         return self.alpha, self.beta
 
+class RandomWalkStrategy(Strategy):
+    global world
+    def __init__(self, unit, x_bound, y_bound):
+        self.unit = unit
+        self.target = Vec(randint(x_bound[0],x_bound[1]), randint(y_bound[0],y_bound[1]))
+        self.x_bound = x_bound
+        self.y_bound = y_bound
+
+        self.alpha = 0.0
+        self.beta  = 0.0
+        self.beta_ = 0.0
+
+        
+    def implementStrategy(self, state):
+        distance = state[0]
+        angle = state[1]
+        status = state[2]
+
+        target_angle = getAngle(self.unit.direction, self.target-self.unit.position)
+        speed_angle = getAngle(self.unit.speed, self.target-self.unit.position)
+
+        target_distance = (self.target-self.unit.position).abs()
+
+        if target_distance > 50:
+            if target_angle * speed_angle >= 0.0:
+                self.beta = min(1.0, 0.8 * (target_angle / self.unit.max_dw))
+            else: 
+                self.beta = 0.0
+
+            self.alpha = 1.0*min(1.0, target_distance/self.unit.max_ds)
+
+        else:
+            self.target = Vec(randint(self.x_bound[0],self.x_bound[1]), randint(self.y_bound[0],self.y_bound[1]))
+            self.alpha = 0.0
+            self.beta  = 0.0
+        
+        c = pg.draw.circle(world.surface, (128,0,0), [self.target.x, self.target.y],20)
+        pg.display.update(c)
+
+#        font = pg.font.SysFont("Times New Roman",12)
+#        stat = font.render("TA: {} SA Speed: {}".format(int(100*target_angle)/100.0,int(100*speed_angle )/100.0), True, (0,0,0))
+#        d = world.surface.blit(stat, (world.screen[0]-240,50))
+#        pg.display.update(d)
+
+
+
+#        print "Beta: {} TA: {} SA: {}".format(self.beta,target_angle,speed_angle) 
+
+        return self.alpha, self.beta
+        
+world = None
 
 def main():
+    global world
     pg.init()
     screen = [1152, 864]
     surface = pg.display.set_mode((1152, 864), 16)
@@ -203,16 +278,16 @@ def main():
     
     start_position = Vec(50,50)
     controller1 = Controller()
-    unit1 = Unit(max_ds=6.0, max_dw=5.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.013)
+    unit1 = Unit(max_ds=6.0, max_dw=5.0, sprite=sprite, position=start_position, direction=Vec(0.0,-1.0).norm(),k=0.013)
     
     start_position = Vec(screen[0]/2.0,screen[1]/2.0)
     controller2 = Controller()
-    unit2 = Unit(max_ds=5.0, max_dw=4.0, sprite=sprite, position=start_position, direction=Vec(0.0,1.0),k=0.018)
+    unit2 = Unit(max_ds=6.0, max_dw=4.0, sprite=sprite, position=start_position, direction=Vec(0.0,-1.0).norm(),k=0.013)
     
     world = World([unit1,unit2],[controller1,controller2], surface, screen)
     clock = pg.time.Clock()
 
-    s = SimpleStrategy(unit2)
+    s = RandomWalkStrategy(unit2, (0,screen[0]),(0, screen[1]))
     
     while True:
         keystate = pg.key.get_pressed()
@@ -220,19 +295,14 @@ def main():
             if event.type == QUIT: pg.quit();sys.exit()
                     
         if keystate[K_ESCAPE]: pg.quit();sys.exit()
-        if keystate[K_UP]: controller1.alpha = -1.0
-        if keystate[K_DOWN]: controller1.alpha = 1.0
-        if keystate[K_LEFT]: controller1.beta = 0.05
-        if keystate[K_RIGHT]: controller1.beta = -0.05
+        if keystate[K_UP]: controller1.alpha = 1.0
+        if keystate[K_DOWN]: controller1.alpha = -1.0
+        if keystate[K_LEFT]: controller1.beta = -0.05
+        if keystate[K_RIGHT]: controller1.beta = 0.05
 
         alpha, beta = s.implementStrategy(world.getState())
         controller2.alpha = alpha
         controller2.beta = beta
-
-        if keystate[K_w]: controller2.alpha = -1.0
-        if keystate[K_s]: controller2.alpha = 1.0
-        if keystate[K_a]: controller2.beta = 0.05
-        if keystate[K_d]: controller2.beta = -0.05
                 
         world.tick(1.0/60.0)
         world.draw(font)
