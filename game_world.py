@@ -20,7 +20,6 @@ class Target(Unit):
     def update(self, position):
         self.position = position
 
-
 class MovableUnit(Unit):
     def __init__(self, id, position, direction, radious, max_ds, max_dw, friction_k):
         super(MovableUnit, self).__init__(id, position, direction, radious)
@@ -82,15 +81,17 @@ class TargerFollowStrategy(Strategy):
         super(TargerFollowStrategy, self).__init__()
         
     def implement(self, state):
-        target = state["targets"][0]
-        target_distance = (self.controller._munit.position - target).abs()
-        target_angle    = getAngle(self.controller._munit.direction, target - self.controller._munit.position)
+        unit = self.controller._munit
+        distances = list(enumerate([(unit.position - target).abs() for target in state["targets"]]))
+        nearest_target = min(distances, key=lambda x:x[1]) 
+        target = state["targets"][nearest_target[0]]
+        target_angle = getAngle(unit.direction, target - unit.position)
 
         alpha = 0.0
         beta  = 0.0
 
-        if target_distance > 2.0*self.controller._munit.radious:
-            beta = min(1.0, (target_angle / 2.0*np.sqrt(self.controller._munit.max_dw)))
+        if nearest_target[1] > 2.0*unit.radious:
+            beta = min(1.0, (target_angle / 2.0*np.sqrt(unit.max_dw)))
             alpha = 1.0
         
         return alpha, beta
@@ -106,8 +107,8 @@ class UserInputStrategy(Strategy):
         keystate = pg.key.get_pressed()
         if keystate[K_UP]: alpha += 1.0
         if keystate[K_DOWN]: alpha += -1.0
-        if keystate[K_LEFT]: beta += -0.2
-        if keystate[K_RIGHT]: beta += 0.2
+        if keystate[K_LEFT]: beta += -0.3
+        if keystate[K_RIGHT]: beta += 0.3
 
         return alpha, beta
 
@@ -206,13 +207,14 @@ def main():
     p1_pos = Vec(randint(0, world_shape[0]), randint(0, world_shape[1]))
     p2_pos = Vec(randint(0, world_shape[0]), randint(0, world_shape[1]))
 
-    player_1 = ControlledUnit(id=1, position=p1_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=3, friction_k=0.013, controller=controller_1)
-    player_2 = ControlledUnit(id=2, position=p2_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=3, friction_k=0.013, controller=controller_2)
+    player_1 = ControlledUnit(id=1, position=p1_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=2, friction_k=0.013, controller=controller_1)
+    player_2 = ControlledUnit(id=2, position=p2_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=2, friction_k=0.013, controller=controller_2)
 
     player_1.controller.bindStrategy(UserInputStrategy())
     player_2.controller.bindStrategy(TargerFollowStrategy())
 
     target_1 = Target(id=3, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
+    target_2 = Target(id=4, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
 
     resources = dict()
     resources["image"] = dict()
@@ -220,13 +222,13 @@ def main():
     for player in [player_1, player_2]:
         resources["image"][player.id] = pg.image.load("Arrow.png").convert()
 
-    for target in [target_1]:
+    for target in [target_1, target_2]:
         resources["image"][target.id] = pg.image.load("Circle.png").convert()
 
     resources["font"] = pg.font.SysFont("Times New Roman",12)
     clock = pg.time.Clock()
 
-    world = World(players=[player_1, player_2], targets=[target_1],shape=world_shape)
+    world = World(players=[player_1, player_2], targets=[target_1, target_2], shape=world_shape)
     visualization = Visualization(world, resources, surface)
 
     while True:
