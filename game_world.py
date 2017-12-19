@@ -159,9 +159,10 @@ class World(object):
         self.state["time_delta"] = dt
 
 class Visualization(object):
-    def __init__(self, world, resources):
+    def __init__(self, world, resources, surface):
         self.world = world
         self.resources = resources
+        self.surface = surface
 
     def render(self, stat=True):
         units = self.world.players + self.world.targets 
@@ -186,7 +187,10 @@ class Visualization(object):
         pg.display.flip()
 
 def main():
+    pg.init()
     world_shape = (1152, 784)
+    surface = pg.display.set_mode((world_shape[0], world_shape[1]), 16)
+    pg.display.set_caption("OpenAI test game")
 
     controller_1 = StrategyController()
     controller_2 = StrategyController()
@@ -215,7 +219,7 @@ def main():
     clock = pg.time.Clock()
 
     world = World(players=[player_1, player_2], targets=[target_1],shape=world_shape)
-    visualization = Visualization(world, resources)
+    visualization = Visualization(world, resources, surface)
 
     while True:
         keystate = pg.key.get_pressed()
