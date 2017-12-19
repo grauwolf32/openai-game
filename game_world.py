@@ -174,7 +174,7 @@ class Visualization(object):
         units = self.world.players + self.world.targets 
         for unit in units:
             unit_image = self.resources["image"][unit.id]
-            phi = 180.0*getAngle(unit.direction,Vec(1.0,0.0))/np.pi
+            phi = 180.0*getAngle(unit.direction,Vec(0.0,-1.0))/np.pi
             image = pg.transform.rotate(unit_image, phi) 
             height = image.get_height()/2.0
             width  = image.get_width()/2.0
@@ -187,8 +187,10 @@ class Visualization(object):
             
             font = self.resources["font"]
             for i in xrange(0,len(player_id)):
-                info = font.render("{} : {}".format(player_id[i], self.world.state[player_id[i]]), True, (0,0,0))
-                self.surface.blit(info, (self.world.shape[0]-240,i*12 + 10))
+                text = "{} : {}".format(player_id[i], self.world.state[player_id[i]])
+                info = font.render(text, True, (0,0,0))
+                size = font.size(text)
+                self.surface.blit(info, (self.world.shape[0]-size[0]-20,i*(size[1]+3) + 10))
 
         pg.display.flip()
 
@@ -204,8 +206,8 @@ def main():
     p1_pos = Vec(randint(0, world_shape[0]), randint(0, world_shape[1]))
     p2_pos = Vec(randint(0, world_shape[0]), randint(0, world_shape[1]))
 
-    player_1 = ControlledUnit(id=1, position=p1_pos,direction=Vec(1.0,0.0), radious=40.0, max_ds=6.0, max_dw=5, friction_k=0.013, controller=controller_1)
-    player_2 = ControlledUnit(id=2, position=p2_pos,direction=Vec(1.0,0.0), radious=40.0, max_ds=6.0, max_dw=5, friction_k=0.013, controller=controller_2)
+    player_1 = ControlledUnit(id=1, position=p1_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=3, friction_k=0.013, controller=controller_1)
+    player_2 = ControlledUnit(id=2, position=p2_pos,direction=Vec(1.0,0.0), radious=20.0, max_ds=6.0, max_dw=3, friction_k=0.013, controller=controller_2)
 
     player_1.controller.bindStrategy(UserInputStrategy())
     player_2.controller.bindStrategy(TargerFollowStrategy())
