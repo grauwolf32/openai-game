@@ -1,5 +1,6 @@
 import  numpy as np
 import pygame as pg
+import sys
 
 from random import randint
 from pygame.locals import *
@@ -13,8 +14,8 @@ class Unit(object):
         self.id = id
         
 class Target(Unit):
-    def __init__( self, id, position, direction, radious):
-        super(self, Target).__init__(id, position, direction, radious)
+    def __init__(self, id, position, direction, radious):
+        super(Target, self).__init__(id, position, direction, radious)
     
     def update(self, position):
         self.position = position
@@ -22,7 +23,7 @@ class Target(Unit):
 
 class MovableUnit(Unit):
     def __init__(self, id, position, direction, radious, max_ds, max_dw, friction_k):
-        super(self, MovableUnit).__init__(id, position, direction, radious)
+        super(MovableUnit, self).__init__(id, position, direction, radious)
         self.max_ds = max_ds
         self.max_dw = max_dw
         self.friction_k = friction_k
@@ -33,7 +34,7 @@ class MovableUnit(Unit):
 
 class ControlledUnit(MovableUnit):
     def __init__(self, id, position, direction, radious, max_ds, max_dw, friction_k, controller):
-        super(self, ControlledUnit).__init__(id, position, direction, radious,max_ds, max_dw, friction_k)
+        super(ControlledUnit, self).__init__(id, position, direction, radious,max_ds, max_dw, friction_k)
         self.controller = controller
         self.controller.bindUnit(self)
 
@@ -58,34 +59,32 @@ class Strategy(object):
     def implement(self, state):
         pass
 
-class StrategyController(Controller):
-    def __init__(self, strategy):
-        super(self,StrategyController).__init__()
-        self.strategy = strategy
+    def bindController(self, controller):
+        self.controller = controller
 
+class StrategyController(Controller):
     def __init__(self):
-        super(self,StrategyController).__init__()
+        super(StrategyController, self).__init__()
         self.strategy = None
 
     def bindStrategy(self, strategy):
         self.strategy = strategy
+        self.strategy.bindController(self)
 
     def updateState(self, state):
         dt = state["time_delta"]
         if self.strategy != None:
             alpha, beta = self.strategy.implement(state)
-            super(self, StrategyController).updateState(alpha=alpha, beta=beta, dt=dt)
+            super(StrategyController, self).updateState(alpha=alpha, beta=beta, dt=dt)
 
 class TargerFollowStrategy(Strategy):
-    def __init__(self, controller):
-        super(self, TargerFollowStrategy).__init__()
-        self.controller = controller
-        self.controller.bindStrategy(self)
+    def __init__(self):
+        super(TargerFollowStrategy, self).__init__()
         
     def implement(self, state):
         target = state["targets"][0]
-        target_distance = (self.controller._munit.position - target.position).abs()
-        target_angle    = getAngle(self.controller.munit.direction, target.position - self.controller._munit.position)
+        target_distance = (self.controller._munit.position - target).abs()
+        target_angle    = getAngle(self.controller._munit.direction, target - self.controller._munit.position)
 
         alpha = 0.0
         beta  = 0.0
@@ -98,7 +97,7 @@ class TargerFollowStrategy(Strategy):
 
 class UserInputStrategy(Strategy):
     def __init__(self):
-        super(self, UserInputStrategy).__init__()
+        super(UserInputStrategy, self).__init__()
 
     def implement(self, state):
         alpha = 0.0
@@ -106,9 +105,9 @@ class UserInputStrategy(Strategy):
 
         keystate = pg.key.get_pressed()
         if keystate[K_UP]: alpha += 1.0
-        if keystate[K_DOWN]: controller1.alpha += -1.0
-        if keystate[K_LEFT]: controller1.beta += -0.2
-        if keystate[K_RIGHT]: controller1.beta += 0.2
+        if keystate[K_DOWN]: alpha += -1.0
+        if keystate[K_LEFT]: beta += -0.2
+        if keystate[K_RIGHT]: beta += 0.2
 
         return alpha, beta
 
@@ -143,6 +142,12 @@ class World(object):
         for player in self.players:
             player.controller.updateState(self.state)
 
+        for player in self.players:
+            if player.position.x < 0.0: player.position.x = 0.0
+            if player.position.y < 0.0: player.position.y = 0.0
+            if player.position.x > self.shape[0]: player.position.x = self.shape[0]
+            if player.position.y > self.shape[1]: player.position.y = self.shape[1]
+
         for target in self.targets:
             for player in self.players:
                 if (player.position - target.position).abs() <= (player.radious + target.radious):
@@ -165,6 +170,7 @@ class Visualization(object):
         self.surface = surface
 
     def render(self, stat=True):
+        self.surface.fill((255,255,255))
         units = self.world.players + self.world.targets 
         for unit in units:
             unit_image = self.resources["image"][unit.id]
@@ -179,10 +185,10 @@ class Visualization(object):
         if stat == True:  
             player_id = ["player_{}".format(player.id) for player in self.world.players]
             
-            font = resources["font"]
+            font = self.resources["font"]
             for i in xrange(0,len(player_id)):
                 info = font.render("{} : {}".format(player_id[i], self.world.state[player_id[i]]), True, (0,0,0))
-                self.surface.blit(info, (self.screen[0]-240,i*12 + 10))
+                self.surface.blit(info, (self.world.shape[0]-240,i*12 + 10))
 
         pg.display.flip()
 
@@ -204,7 +210,7 @@ def main():
     player_1.controller.bindStrategy(UserInputStrategy())
     player_2.controller.bindStrategy(TargerFollowStrategy())
 
-    target_1 = Target(id=3, position=Vec(0.0,0.0), direction=(1.0,0.0), radious=20)
+    target_1 = Target(id=3, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
 
     resources = dict()
     resources["image"] = dict()
@@ -212,7 +218,7 @@ def main():
     for player in [player_1, player_2]:
         resources["image"][player.id] = pg.image.load("Arrow.png").convert()
 
-    for targets in [target_1]:
+    for target in [target_1]:
         resources["image"][target.id] = pg.image.load("Circle.png").convert()
 
     resources["font"] = pg.font.SysFont("Times New Roman",12)
@@ -227,10 +233,9 @@ def main():
             if event.type == QUIT: pg.quit();sys.exit()
         if keystate[K_ESCAPE]: pg.quit();sys.exit()
 
-    world.updateState(dt=1.0/60.0)
-    visualization.render()
-    clock.tick()
+        world.updateState(dt=1.0/60.0)
+        visualization.render()
+        clock.tick()
 
 if __name__=="__main__":
     main()
-            
