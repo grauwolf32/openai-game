@@ -114,29 +114,28 @@ class UserInputStrategy(Strategy):
         return alpha, beta
 
 class AIControlledStrategy(Strategy):
-    pass
+    def __init__(self):
+        super(AIControlledStrategy, self).__init__()
+        self.alpha = 0.0
+        self.beta  = 0.0
+
+    def setControl(self, alpha, beta):
+        self.alpha = alpha
+        self.beta = beta
+
+    def implement(self, state):
+         alpha = self.alpha
+         beta  = self.beta
+
+         return alpha, beta
         
 class World(object):
     def __init__(self, players, targets, shape):
-        self.state = dict()
-        self.players = players
         self.shape = shape
+        self.players = players
         self.targets = targets
-
-        for target in self.targets:
-            pos_x = float(randint(0, self.shape[0]))
-            pos_y = float(randint(0, self.shape[1]))
-            position = Vec(pos_x, pos_y)
-            target.update(position)
-
-
-        for i in xrange(0, len(self.players)):
-            self.state["player_{}".format(self.players[i].id)] = 0.0
-
-        self.state["targets"] = [target.position for target in self.targets]
-        self.state["players"] = [player.position for player in self.players]
-        self.state["time_delta"] = 0.0
-
+        self.resetState()
+        
     def getState(self):
         return self.state
     
@@ -164,6 +163,29 @@ class World(object):
         self.state["targets"] = [target.position for target in self.targets]
         self.state["players"] = [player.position for player in self.players]
         self.state["time_delta"] = dt
+
+    def resetState(self):
+        self.state = dict()
+
+        for player in self.players:
+            pos_x = float(randint(0, self.shape[0]))
+            pos_y = float(randint(0, self.shape[1]))
+            position = Vec(pos_x, pos_y)
+            player.position = position
+
+        for target in self.targets:
+            pos_x = float(randint(0, self.shape[0]))
+            pos_y = float(randint(0, self.shape[1]))
+            position = Vec(pos_x, pos_y)
+            target.update(position)
+
+
+        for i in xrange(0, len(self.players)):
+            self.state["player_{}".format(self.players[i].id)] = 0.0
+
+        self.state["targets"] = [target.position for target in self.targets]
+        self.state["players"] = [player.position for player in self.players]
+        self.state["time_delta"] = 0.0
 
 class Visualization(object):
     def __init__(self, world, resources, surface):
