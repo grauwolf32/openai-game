@@ -23,8 +23,30 @@ class GameEnv(Env):
         world = World(players=[player_1, player_2], targets=[target_1, target_2], shape=world_shape)
         self.world = world
         self.actor = player_2
+
+    def _step(self, action): 
+        alpha, beta = action
+        self.actor.controller.strategy.setControl(alpha, beta)
+        self.world.updateState(dt=1.0/10.0)
         
-    def _step(self, action): raise NotImplementedError
-    def _reset(self): raise NotImplementedError
+        state = self.world.getState()
+        actor_score = state["player_{}".format(self.actor.id)]
+        
+        opponent_score = 0.0
+        for player in self.world.players:
+            if player.id == self.actor.id:
+                continue
+            opponent_score += state["player_{}".format(player.id)]
+
+        n_opponents = len(self.world.players) - 1.0
+        if n_opponents > 0.0:
+            opponent_score /= n_opponents
+
+        reward = actor_score - 0.5*opponent_score
+
+        
+    def _reset(self): 
+        self.world.resetState()
+
     def _render(self, mode='human', close=False): return
     def _seed(self, seed=None): return []
