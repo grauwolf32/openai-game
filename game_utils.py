@@ -217,3 +217,45 @@ class Visualization(object):
                 self.surface.blit(info, (self.world.shape[0]-size[0]-20,i*(size[1]+3) + 10))
 
         pg.display.flip()
+
+def get_observables(world, actor_id):
+    # I choose these observables:
+    # position, direction, speed of the actor
+    # position, direction, speed of other players, sorted in ascented order of distance to the actor
+    # position of the targets sorted in ascented order of distance to the actor
+
+    observables = list()
+    actor = None
+
+    for player in world.players:
+        if player.id == actor_id:
+            actor = player
+            break
+    if actor == None:
+        raise Exception("No such player with the actor id in this world")
+
+    sorted_players = sorted(world.players, key=lambda x: (x.position - actor.position).abs())
+    sorted_targets = sorted(world.targets, key=lambda x: (x.position - actor.position).abs())
+
+    observables.append(actor.position.x)
+    observables.append(actor.position.y)
+    observables.append(actor.direction.x)
+    observables.append(actor.direction.y)
+    observables.append(actor.speed.x)
+    observables.append(actor.speed.y)
+
+
+    for player in sorted_players:
+        if player.id != actor.id:
+            observables.append(player.position.x)
+            observables.append(player.position.y)
+            observables.append(player.direction.x)
+            observables.append(player.direction.y)
+            observables.append(player.speed.x)
+            observables.append(player.speed.y)
+            
+    for target in sorted_targets:
+        observables.append(target.position.x)
+        observables.append(target.position.y)
+
+    return observables

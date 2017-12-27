@@ -6,7 +6,7 @@ from vectors import *
 from game_utils import *
 
 def main():
-    world_shape = (1152, 784)
+    world_shape = (480, 360)
 
     controller_1 = StrategyController()
     controller_2 = StrategyController()
@@ -28,7 +28,7 @@ def main():
 
     t1 = time.time()
     while True:
-        world.updateState(dt=1.0/20.0)
+        world.updateState(dt=1.0/10.0)
         n_iter += 1
         
         if n_iter % 250 == 0:
@@ -40,7 +40,7 @@ def main():
             print "-"*20
             print ""
 
-        if n_iter >= 10000:
+        if n_iter >= 3000:
             break
     t2 = time.time()
 

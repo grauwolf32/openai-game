@@ -1,10 +1,16 @@
+import numpy as np
+import os
+import gym
 from gym import error, spaces
 from gym import utils
 from gym.utils import seeding
 
+import pygame as pg
+
 class GameEnv(Env):
-    def __init__(self):
-        world_shape = (1152, 784)
+    def __init__(self, visualization=False):
+        ## Init World
+        world_shape = (480, 360)
         controller_1 = StrategyController()
         controller_2 = AIControlledStrategy()
 
@@ -24,8 +30,40 @@ class GameEnv(Env):
         self.world = world
         self.actor = player_2
 
+        ## Init Visualization
+        self.visualization = None
+        if visualization == True:
+            pg.init() ## Does it take much time ?
+            surface = pg.display.set_mode((self.world.shape[0], self.world.shape[1]), 16)
+
+            resources = dict()
+            resources["image"] = dict()
+
+            for player in world.players:
+                resources["image"][player.id] = pg.image.load("Arrow.png").convert()
+
+            for target in world.targets:
+                resources["image"][target.id] = pg.image.load("Circle.png").convert()
+
+            resources["font"] = pg.font.SysFont("Times New Roman",12)
+            self.visualization = Visualization(self.world, resources, surface)
+
+        ## Other
+        self.action_space = spaces.Box(low=[-1,-1], high=[1,1])
+
+        max_speed = np.sqrt(self.actor.max_ds, self.actor.friction_k)
+        n_players = len(self.world.players)
+        n_targets = len(self.world.targets)
+
+        ob_low  = [0, 0, -1,-1,-max_speed,-max_speed]*n_players + [0,0]*n_targets
+        ob_high = [self.world.shape[0], self.world.shape[1], 1,1,max_speed, max_speed]*n_players + [[self.world.shape[0], self.world.shape[1]]*n_targets
+
+        self.observation_space = spaces.Box(low=ob_low, high=ob_high)
+
     def _step(self, action): 
-        alpha, beta = action
+        alpha = action[0]
+        beta = action[1]
+
         self.actor.controller.strategy.setControl(alpha, beta)
         self.world.updateState(dt=1.0/10.0)
         
@@ -43,10 +81,28 @@ class GameEnv(Env):
             opponent_score /= n_opponents
 
         reward = actor_score - 0.5*opponent_score
+        observation = get_observables(world=self.world, actor_id=self.actor.id)
+        done = False
+        
+        if reward <= -10.0:
+            done = True
+
+        info = dict()
+        return observation, reward, done, info 
 
         
     def _reset(self): 
         self.world.resetState()
 
-    def _render(self, mode='human', close=False): return
-    def _seed(self, seed=None): return []
+    def _render(self, mode='human', close=False):
+        if mode == 'human':
+            if self.visualization != None:
+                self.visualization.render()
+                pg.display.flip()
+
+    def _seed(self, seed=None): 
+        return []
+
+    def _close(self):
+        if self.visualization != None:
+            pg.quit()
