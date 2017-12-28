@@ -4,9 +4,9 @@ import gym
 from gym import error, spaces
 from gym import utils
 from gym.utils import seeding
+from copy import deepcopy
 
 from game_utils import *
-import pygame as pg
 
 class GameEnv(gym.Env):
     def __init__(self, visualization=False):
@@ -33,23 +33,6 @@ class GameEnv(gym.Env):
 
         ## Init Visualization
         self.visualization = None
-        
-        if visualization == True:
-            pg.init() ## Does it take much time ?
-            surface = pg.display.set_mode((self.world.shape[0], self.world.shape[1]), 16)
-
-            resources = dict()
-            resources["image"] = dict()
-
-            for player in world.players:
-                resources["image"][player.id] = pg.image.load("Arrow.png").convert()
-
-            for target in world.targets:
-                resources["image"][target.id] = pg.image.load("Circle.png").convert()
-
-            resources["font"] = pg.font.SysFont("Times New Roman",12)
-            self.visualization = Visualization(self.world, resources, surface)
-            self.metadata["render.modes"].append("human")
 
         ## Other
         self.action_space = spaces.Box(low=np.array([-1,-1]), high=np.array([1,1]))
@@ -64,34 +47,40 @@ class GameEnv(gym.Env):
         self.observation_space = spaces.Box(low=np.array(ob_low), high=np.array(ob_high))
 
         self._spec = EnvSpec(timestep_limit = 6000, id=1)
+        self.total_reward = 0.0
 
     def _step(self, action): 
         alpha = action[0]
         beta = action[1]
 
         #print("{} {}".format(alpha, beta))
+        old_state = deepcopy(self.world.state)
 
         self.actor.controller.strategy.setControl(alpha, beta)
         self.world.updateState(dt=1.0/10.0)
         
         state = self.world.getState()
-        actor_score = state["player_{}".format(self.actor.id)]
+        actor_score = (state["player_{}".format(self.actor.id)] - old_state["player_{}".format(self.actor.id)])
         
         opponent_score = 0.0
         for player in self.world.players:
             if player.id == self.actor.id:
                 continue
-            opponent_score += state["player_{}".format(player.id)]
+            opponent_score += (state["player_{}".format(player.id)] - old_state["player_{}".format(player.id)])
 
         n_opponents = len(self.world.players) - 1.0
+
         if n_opponents > 0.0:
             opponent_score /= n_opponents
 
         reward = actor_score - 0.5*opponent_score
+        #print("Reward: {}".format(reward))
+
         observation = get_observables(world=self.world, actor_id=self.actor.id)
         done = False
+        self.total_reward += reward
         
-        if reward <= -10.0:
+        if self.total_reward <= -10.0:
             done = True
 
         info = dict()
@@ -100,18 +89,19 @@ class GameEnv(gym.Env):
         
     def _reset(self): 
         self.world.resetState()
+        self.total_reward = 0.0
         observation = get_observables(world=self.world, actor_id=self.actor.id)
         return observation
 
     def _render(self, mode='human', close=False):
         if mode == 'human':
             if self.visualization != None:
-                self.visualization.render()
-                pg.display.flip()
+                pass
 
     def _seed(self, seed=None): 
         return []
 
     def _close(self):
-        if self.visualization != None:
-            pg.quit()
+        #if self.visualization != None:
+        #    pg.quit()
+        pass
