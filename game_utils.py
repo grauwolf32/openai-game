@@ -102,16 +102,16 @@ class UserInputStrategy(Strategy):
         super(UserInputStrategy, self).__init__()
 
     def implement(self, state):
-        alpha = 0.0
-        beta = 0.0
+        self.alpha = 0.0
+        self.beta = 0.0
 
         keystate = pg.key.get_pressed()
-        if keystate[K_UP]: alpha += 1.0
-        if keystate[K_DOWN]: alpha += -1.0
-        if keystate[K_LEFT]: beta += -0.3
-        if keystate[K_RIGHT]: beta += 0.3
+        if keystate[K_UP]: self.alpha += 1.0
+        if keystate[K_DOWN]: self.alpha += -1.0
+        if keystate[K_LEFT]: self.beta += -0.3
+        if keystate[K_RIGHT]: self.beta += 0.3
 
-        return alpha, beta
+        return self.alpha, self.beta
 
 class AIControlledStrategy(Strategy):
     def __init__(self):
@@ -120,14 +120,18 @@ class AIControlledStrategy(Strategy):
         self.beta  = 0.0
 
     def setControl(self, alpha, beta):
+        #print "Control set to {} {}".format(alpha, beta)
         self.alpha = alpha
         self.beta = beta
 
     def implement(self, state):
-         alpha = self.alpha
-         beta  = self.beta
+        alpha = self.alpha
+        beta  = self.beta
 
-         return alpha, beta
+        self.alpha = 0.0
+        self.beta  = 0.0
+
+        return alpha, beta
         
 class World(object):
     def __init__(self, players, targets, shape):
@@ -180,7 +184,7 @@ class World(object):
             target.update(position)
 
 
-        for i in xrange(0, len(self.players)):
+        for i in range(0, len(self.players)):
             self.state["player_{}".format(self.players[i].id)] = 0.0
 
         self.state["targets"] = [target.position for target in self.targets]
@@ -210,7 +214,7 @@ class Visualization(object):
             player_id = ["player_{}".format(player.id) for player in self.world.players]
             
             font = self.resources["font"]
-            for i in xrange(0,len(player_id)):
+            for i in iter(range(0,len(player_id))):
                 text = "{} : {}".format(player_id[i], self.world.state[player_id[i]])
                 info = font.render(text, True, (0,0,0))
                 size = font.size(text)
@@ -258,4 +262,9 @@ def get_observables(world, actor_id):
         observables.append(target.position.x)
         observables.append(target.position.y)
 
-    return observables
+    return np.array(observables)
+
+class EnvSpec(object):
+    def __init__(self, timestep_limit,id):
+        self.timestep_limit = timestep_limit
+        self.id = id
