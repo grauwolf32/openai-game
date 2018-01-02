@@ -16,7 +16,7 @@ from game_env import *
 
 def train(num_timesteps, seed):
     env=GameEnv(visualization=True)
-    env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir()))
+    env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
     env.seed(seed)
     gym.logger.setLevel(logging.WARN)
@@ -30,16 +30,16 @@ def train(num_timesteps, seed):
             policy = GaussianMlpPolicy(ob_dim, ac_dim)
 
         learn(env, policy=policy, vf=vf,
-            gamma=0.99, lam=0.97, timesteps_per_batch=10000,
+            gamma=0.99, lam=0.97, timesteps_per_batch=4000,
             desired_kl=0.002,
-            num_timesteps=num_timesteps, animate=False)
+            num_timesteps=num_timesteps, animate=True)
 
         env.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run Mujoco benchmark.')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
-    parser.add_argument('--num-timesteps', type=int, default=int(1e6))
+    parser.add_argument('--num-timesteps', type=int, default=int(1e8))
     args = parser.parse_args()
     logger.configure()
     train(num_timesteps=args.num_timesteps, seed=args.seed)
