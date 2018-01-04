@@ -67,8 +67,11 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     U.initialize()
 
     if fname != None:
-        U.load_state(fname)
-        logger.log("Model loaded from file {}".format(fname))
+        load_result = U.load_state(fname)
+        if load_result:
+            logger.log("Model loaded from file {}".format(fname))
+        else:
+            logger.log("Model failed to load from file {}".format(fname))
 
     # start queue runners
     enqueue_threads = []
