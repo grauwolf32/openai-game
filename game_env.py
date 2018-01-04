@@ -67,7 +67,7 @@ class GameEnv(gym.Env):
 
         self.observation_space = spaces.Box(low=np.array(ob_low), high=np.array(ob_high))
 
-        self._spec = EnvSpec(timestep_limit = 2000, id=1)
+        self._spec = EnvSpec(timestep_limit = 1000, id=1)
         self.total_reward = 0.0
 
     def _step(self, action): 
@@ -78,7 +78,7 @@ class GameEnv(gym.Env):
         old_state = deepcopy(self.world.state)
 
         self.actor.controller.strategy.setControl(alpha, beta)
-        self.world.updateState(dt=1.0/10.0)
+        self.world.updateState(dt=0.75)
         
         state = self.world.getState()
         actor_score = (state["player_{}".format(self.actor.id)] - old_state["player_{}".format(self.actor.id)])
@@ -95,6 +95,7 @@ class GameEnv(gym.Env):
             opponent_score /= n_opponents
 
         reward = actor_score - 0.5*opponent_score
+        reward -= 0.001 #Step penalty
         #print("Reward: {}".format(reward))
 
         observation = get_observables(world=self.world, actor_id=self.actor.id)

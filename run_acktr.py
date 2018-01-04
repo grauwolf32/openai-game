@@ -30,7 +30,7 @@ def train(num_timesteps, seed):
             policy = GaussianMlpPolicy(ob_dim, ac_dim)
 
         learn(env, policy=policy, vf=vf,
-            gamma=0.99, lam=0.97, timesteps_per_batch=4000,
+            gamma=0.99, lam=0.97, timesteps_per_batch=3000,
             desired_kl=0.002,
             num_timesteps=num_timesteps, animate=True)
 
