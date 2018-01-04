@@ -14,7 +14,7 @@ from game_utils import *
 class GameEnv(gym.Env):
     def __init__(self, visualization=False):
         ## Init World
-        world_shape = (480, 360)
+        world_shape = (640, 480)
         controller_1 = StrategyController()
         controller_2 = StrategyController()
 
@@ -27,10 +27,10 @@ class GameEnv(gym.Env):
         player_1.controller.bindStrategy(TargerFollowStrategy())
         player_2.controller.bindStrategy(AIControlledStrategy())
 
-        target_1 = Target(id=3, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
-        target_2 = Target(id=4, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
+        #target_1 = Unit(id=3, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
+        #target_2 = Unit(id=4, position=Vec(0.0,0.0), direction=Vec(1.0,0.0), radious=20)
 
-        world = World(players=[player_1, player_2], targets=[target_1, target_2], shape=world_shape)
+        world = World(players=[player_1, player_2], targets=[player_2], shape=world_shape)
         self.world = world
         self.actor = player_2
 
@@ -75,33 +75,45 @@ class GameEnv(gym.Env):
         beta = action[1]
 
         #print("{} {}".format(alpha, beta))
-        old_state = deepcopy(self.world.state)
+        #old_state = deepcopy(self.world.state)
 
         self.actor.controller.strategy.setControl(alpha, beta)
-        self.world.updateState(dt=1.0/10.0)
+        self.world.updateState(dt=1.0/4.0)
         
         state = self.world.getState()
-        actor_score = (state["player_{}".format(self.actor.id)] - old_state["player_{}".format(self.actor.id)])
+        #actor_score = (state["player_{}".format(self.actor.id)] - old_state["player_{}".format(self.actor.id)])
         
-        opponent_score = 0.0
+        #opponent_score = 0.0
+        #for player in self.world.players:
+        #    if player.id == self.actor.id:
+        #        continue
+        #    opponent_score += (state["player_{}".format(player.id)] - old_state["player_{}".format(player.id)])
+
+        #n_opponents = len(self.world.players) - 1.0
+
+        #if n_opponents > 0.0:
+        #    opponent_score /= n_opponents
+
+        #reward = actor_score #- 0.5*opponent_score
+        #print("Reward: {}".format(reward))
+        #reward -= 0.001 # Step penalty
+        
+        distances = []
+
         for player in self.world.players:
             if player.id == self.actor.id:
                 continue
-            opponent_score += (state["player_{}".format(player.id)] - old_state["player_{}".format(player.id)])
+            distances.append((player.position - self.actor.position).abs())
 
-        n_opponents = len(self.world.players) - 1.0
-
-        if n_opponents > 0.0:
-            opponent_score /= n_opponents
-
-        reward = actor_score - 0.5*opponent_score
-        #print("Reward: {}".format(reward))
+        reward = np.min(distances) / 1000.0   
 
         observation = get_observables(world=self.world, actor_id=self.actor.id)
-        done = False
+        done = state["done"]
+        if done:
+            reward -= 100.0 # Catch penalty
         self.total_reward += reward
         
-        if self.total_reward <= -10.0:
+        if self.total_reward >= 400:#<= -2.0:
             done = True
 
         info = dict()

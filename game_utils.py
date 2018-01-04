@@ -13,13 +13,6 @@ class Unit(object):
         self.position = position
         self.radious = radious
         self.id = id
-        
-class Target(Unit):
-    def __init__(self, id, position, direction, radious):
-        super(Target, self).__init__(id, position, direction, radious)
-    
-    def update(self, position):
-        self.position = position
 
 class MovableUnit(Unit):
     def __init__(self, id, position, direction, radious, max_ds, max_dw, friction_k):
@@ -155,14 +148,22 @@ class World(object):
 
         for target in self.targets:
             for player in self.players:
+                if player.id == target.id:
+                    continue
+                    
                 if (player.position - target.position).abs() <= (player.radious + target.radious):
-                    self.state["player_{}".format(player.id)] += 1.0
+                    #self.state["player_{}".format(player.id)] += 1.0
+                    ## What to do with target
+                    #pos_x = float(randint(0, self.shape[0]))
+                    #pos_y = float(randint(0, self.shape[1]))
+                    #position = Vec(pos_x, pos_y)
+                    #target.position = position
                     
-                    pos_x = float(randint(0, self.shape[0]))
-                    pos_y = float(randint(0, self.shape[1]))
-                    
-                    position = Vec(pos_x, pos_y)
-                    target.update(position)
+                    #If we have number of targets, we can do something like this:
+                    #target = steel_alive_target, to keep number of parameters
+                    #For now i decide to keep it simple, and just do
+
+                    self.state["done"] = True
 
         self.state["targets"] = [target.position for target in self.targets]
         self.state["players"] = [player.position for player in self.players]
@@ -181,7 +182,7 @@ class World(object):
             pos_x = float(randint(0, self.shape[0]))
             pos_y = float(randint(0, self.shape[1]))
             position = Vec(pos_x, pos_y)
-            target.update(position)
+            target.position = position
 
 
         for i in range(0, len(self.players)):
@@ -190,6 +191,7 @@ class World(object):
         self.state["targets"] = [target.position for target in self.targets]
         self.state["players"] = [player.position for player in self.players]
         self.state["time_delta"] = 0.0
+        self.state["done"] = False
 
 class Visualization(object):
     def __init__(self, world, resources, surface):
