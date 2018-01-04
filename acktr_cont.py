@@ -66,7 +66,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     do_update = U.function(inputs, update_op)
     U.initialize()
 
-    if fname != None and os.path.isfile(fname):
+    if fname != None:
         U.load_state(fname)
         logger.log("Model loaded from file {}".format(fname))
 
@@ -85,7 +85,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
         logger.log("********** Iteration %i ************"%i)
 
         # Save model every 100 iterations
-        if fname != None and (i % 100 == 0):
+        if fname != None and (i % 100 == 99):
             U.save_state(fname)
             logger.log("Model saved to file {}".format(fname))
 
