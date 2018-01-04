@@ -8,13 +8,13 @@ from baselines import logger
 from baselines.common import set_global_seeds
 from baselines import bench
 
-from baselines.acktr.acktr_cont import learn
+from acktr_cont import learn
 from baselines.acktr.policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
 
 from game_env import *
 
-def train(num_timesteps, seed):
+def train(num_timesteps, seed, fname):
     env=GameEnv(visualization=True)
     env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
@@ -32,14 +32,15 @@ def train(num_timesteps, seed):
         learn(env, policy=policy, vf=vf,
             gamma=0.99, lam=0.97, timesteps_per_batch=6000,
             desired_kl=0.002,
-            num_timesteps=num_timesteps, animate=True)
+            num_timesteps=num_timesteps, animate=True, fname=fname)
 
         env.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run Mujoco benchmark.')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
+    parser.add_argument('--fname', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=int(1e9))
     args = parser.parse_args()
     logger.configure()
-    train(num_timesteps=args.num_timesteps, seed=args.seed)
+    train(num_timesteps=args.num_timesteps, seed=args.seed, fname=args.fname)
