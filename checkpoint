@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/ruslan/openai/openai-game/competitive-ai.ckpt"
+all_model_checkpoint_paths: "/home/ruslan/openai/openai-game/competitive-ai.ckpt"
