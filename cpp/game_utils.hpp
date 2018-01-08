@@ -1,3 +1,4 @@
+
 #include <cmath>
 #include <cstdlib>
 #include <utility>
@@ -12,6 +13,7 @@
 namespace game{
     typedef std::pair<double, double> Tuple;
     typedef std::map<size_t, double> Scoreboard;
+    
     class World;
 
     class vec2d{
