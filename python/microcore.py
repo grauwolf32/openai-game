@@ -1,14 +1,14 @@
-import numpy as np
 import time
 from random import *
+from math import *
 
 
 def getAngle(x1,y1,x2,y2):
     s = x1*x2 + y1*y2
     v = x1*y2 - y1*x2
 
-    l1 = np.sqrt(x1*x1 + y1*y1)
-    l2 = np.sqrt(x2*x2 + y2*y2)
+    l1 = sqrt(x1*x1 + y1*y1)
+    l2 = sqrt(x2*x2 + y2*y2)
     pr = l1*l2
 
     if l1 < 10e-6 or l2 < 10e-6 or pr < 10e-5:
@@ -16,7 +16,7 @@ def getAngle(x1,y1,x2,y2):
 
     s /= pr
 
-    alpha = np.arccos(s)
+    alpha = acos(s)
 
     if v < 0.0:
         alpha *= -1.0
@@ -32,7 +32,7 @@ max_ds = 6.0
 friction_k = 0.013
 dt = 1.0/10
 
-c = 2.0*np.sqrt(max_dw)
+c = 2.0*sqrt(max_dw)
 rs = 20 + 20 # sum of radious
 
 player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0]
@@ -42,7 +42,7 @@ target_2 = [0.0, 0,0]
 player[0] = randint(0, world_shape[0]) 
 player[1] = randint(0, world_shape[1]) 
 
-player[6] = uniform(0.0, 2.0*np.pi)  
+player[6] = uniform(0.0, 2.0*pi)  
 target_1[0] = randint(0, world_shape[0])
 target_1[1] = randint(0, world_shape[1])
 
@@ -51,7 +51,7 @@ target_2[1] = randint(0, world_shape[1])
 
 a = [0.0, 0.0]
 score = 0
-n = 40000
+n = 200
 
 t1 = time.time()
 for i in xrange(0,n):
@@ -60,20 +60,18 @@ for i in xrange(0,n):
     dd2x = player[0] - target_2[0]
     dd2y = player[1] - target_2[1]
 
-    d1 = np.sqrt((dd1x)**2 + (dd1y)**2)
-    d2 = np.sqrt((dd2x)**2 + (dd2y)**2)
+    d1 = sqrt(dd1x*dd1x + dd1y*dd1y)
+    d2 = sqrt(dd2x*dd2x + dd2y*dd2y)
 
     #Check targets
     if d1 <= rs:
         score += 1.0
-
         target_1[0] = randint(0, world_shape[0])
         target_1[1] = randint(0, world_shape[1])
         continue
     
     if d2 <= rs:
         score += 1.0
-
         target_2[0] = randint(0, world_shape[0])
         target_2[1] = randint(0, world_shape[1])
         continue
@@ -84,21 +82,26 @@ for i in xrange(0,n):
     # Dummy strategy
     if d1 <= d2:
         target_angle = getAngle(player[0],player[1],-dd1x,-dd1y)
-        if d1 > rs:
-            beta = min(1.0, (target_angle / c))
-            alpha = 1.0
     else:
         target_angle = getAngle(player[0],player[1],-dd2x,-dd2y)
-        if d2 > rs:
-            beta = min(1.0, (target_angle / c))
-            alpha = 1.0
+
+    alpha = 1.0
+    bval = target_angle / c
+    beta = min(1.0, max(bval,-1.0))
+
+    #print "alpha: {} beta: {}".format(alpha, beta)
+    #print "d1: {} d2: {}".format(d1, d2)
+    #print  player
+    #print "target_1 ({},{})  target_2({},{})".format(target_1[0],target_1[1],target_2[0],target_2[1]) 
+    #print "-"*20
+    #print "\n"
     
     # Update player state based on alpha, beta
     k = alpha*max_ds
-    speed_abs = (player[2]**2 + player[3]**2)
+    speed_abs = (player[2]*player[2]+ player[3]*player[3])
 
-    a[0] = k*np.cos(player[6]) - friction_k*speed_abs*player[2]
-    a[1] = k*np.sin(player[6]) - friction_k*speed_abs*player[3]
+    a[0] = k*cos(player[6]) - friction_k*speed_abs*player[2]
+    a[1] = k*sin(player[6]) - friction_k*speed_abs*player[3]
 
     player[6] += player[7]*dt
     player[0] += player[2]*dt
