@@ -32,7 +32,7 @@ friction_k = 0.013
 dt = 1.0/10
 
 c = 2.0*sqrt(max_dw)
-rs = 20 + 20 # sum of radious
+rs = 20.0 + 20.0 # sum of radious
 
 player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0]
 target_1 = [0.0, 0.0]
