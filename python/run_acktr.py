@@ -19,7 +19,6 @@ def train(num_timesteps, seed, fname):
     env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
     env.seed(seed)
-    gym.logger.setLevel(logging.WARN)
 
     with tf.Session(config=tf.ConfigProto()):
         ob_dim = env.observation_space.shape[0]

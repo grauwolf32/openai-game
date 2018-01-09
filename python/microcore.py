@@ -97,7 +97,7 @@ for i in xrange(0,n):
     
     # Update player state based on alpha, beta
     k = alpha*max_ds
-    speed_abs = (player[2]*player[2]+ player[3]*player[3])
+    speed_abs = sqrt((player[2]*player[2]+ player[3]*player[3]))
 
     a[0] = k*cpl - friction_k*speed_abs*player[2]
     a[1] = k*spl - friction_k*speed_abs*player[3]

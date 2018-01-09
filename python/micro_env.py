@@ -5,23 +5,26 @@ import pygame as pg
 import numpy as np
 
 from gym import error, spaces
-from gym import utils
 from gym.utils import seeding
-from copy import deepcopy
+from gym import utils
 
-from game_utils import *
 from math import *
 from random import *
+
+class EnvSpec(object):
+    def __init__(self, timestep_limit, id):
+        self.timestep_limit = timestep_limit
+        self.id = id
 
 class GameEnv(gym.Env):
     def __init__(self, visualization=False):
         max_dw = 2.0
         max_ds = 6.0
         friction_k = 0.013
-        dt = 1.0/60.0
+        dt = 1.0/2.0
 
         self.world_shape = (640, 480)
-        self.params = (max_dw, max_ds,friction_k, dt)
+        self.params = (max_dw, max_ds, friction_k, dt)
 
         max_speed = sqrt(max_ds / friction_k)
         self.action_space = spaces.Box(low=np.array([-1,-1]), high=np.array([1,1]))
@@ -42,7 +45,9 @@ class GameEnv(gym.Env):
         self.observation_space = spaces.Box(low=np.array(ob_low), high=np.array(ob_high))
 
         self._spec = EnvSpec(timestep_limit = 3000, id=1)
+        self._seed()
         self._reset()
+        
 
         if visualization == True:
             pg.init()
@@ -83,7 +88,7 @@ class GameEnv(gym.Env):
         self.score += reward
 
         a = [0.0, 0.0]
-        speed_abs = (self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+        speed_abs = sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
         a[0] = k*cos(self.player[6]) - self.params[2]*speed_abs*self.player[2]
         a[1] = k*sin(self.player[6]) - self.params[2]*speed_abs*self.player[3]
 
@@ -110,13 +115,24 @@ class GameEnv(gym.Env):
         if self.player[6] <= -2.0*pi: self.player[6] += 2.0*pi
 
         done = False
+
         if self.score < -10.0: done = True
-        ob = [self.player[0],self.player[1],\
+
+        if d1 <= d2:
+            ob = [self.player[0],self.player[1],\
               self.player[2],self.player[3],\
               self.player[4],self.player[5],\
               self.player[6],self.player[7],\
               self.target_1[0], self.target_1[1],\
               self.target_2[0], self.target_2[1]]
+
+        else:
+            ob = [self.player[0],self.player[1],\
+              self.player[2],self.player[3],\
+              self.player[4],self.player[5],\
+              self.player[6],self.player[7],\
+              self.target_2[0], self.target_2[1],\
+              self.target_1[0], self.target_1[1]]
 
         info = dict()
         return np.array(ob), reward, done, info 
@@ -127,23 +143,41 @@ class GameEnv(gym.Env):
         self.target_1 = [0.0, 0.0]
         self.target_2 = [0.0, 0,0]
 
-        self.player[0] = randint(0, self.world_shape[0]) 
-        self.player[1] = randint(0, self.world_shape[1]) 
-        self.player[6] = uniform(0.0, 2.0*pi)  
+        rx = self.np_random.random_integers(0, self.world_shape[0],3)
+        ry = self.np_random.random_integers(0, self.world_shape[1],3)
 
-        self.target_1[0] = randint(0, self.world_shape[0])
-        self.target_1[1] = randint(0, self.world_shape[1])
+        self.player[0] = rx[0]
+        self.player[1] = ry[0] 
+        self.player[6] = self.np_random.uniform(0.0, 2.0*pi)  
 
-        self.target_2[0] = randint(0, self.world_shape[0])
-        self.target_2[1] = randint(0, self.world_shape[1])
+        self.target_1[0] = rx[1]
+        self.target_1[1] = ry[1]
+
+        self.target_2[0] = rx[2]
+        self.target_2[1] = ry[2]
 
         self.score = 0
-        ob = [self.player[0],self.player[1],\
+
+        dx1 = (self.player[0] - self.target_1[0])
+        dy1 = (self.player[1] - self.target_1[1])
+
+        dx2 = (self.player[0] - self.target_2[0])
+        dy2 = (self.player[1] - self.target_2[1])
+
+        if sqrt(dx1*dx1 + dy1*dy1) <= sqrt(dx2*dx2 + dy2*dy2):
+            ob = [self.player[0],self.player[1],\
               self.player[2],self.player[3],\
               self.player[4],self.player[5],\
               self.player[6],self.player[7],\
               self.target_1[0], self.target_1[1],\
-              self.target_2[0], self.target_2[1]]\
+              self.target_2[0], self.target_2[1]]
+        else:
+            ob = [self.player[0],self.player[1],\
+              self.player[2],self.player[3],\
+              self.player[4],self.player[5],\
+              self.player[6],self.player[7],\
+              self.target_2[0], self.target_2[1],\
+              self.target_1[0], self.target_1[1]]
 
         return np.array(ob)
 
@@ -163,11 +197,12 @@ class GameEnv(gym.Env):
             im.set_colorkey((0,128,0))
 
             self.surface.blit(im, (self.target_1[0]-w, self.target_1[1]-h))
-            self.surface.blit(im, (self.target_1[0]-w, self.target_1[1]-h))
+            self.surface.blit(im, (self.target_2[0]-w, self.target_2[1]-h))
             pg.display.flip()
 
-    def _seed(self, seed=None): 
-        return []
+    def _seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
 
     def _close(self):
         pass
