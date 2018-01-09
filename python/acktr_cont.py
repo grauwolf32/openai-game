@@ -48,14 +48,6 @@ def rollout(env, policy, max_pathlength, animate=False, obfilter=None):
 
 def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     animate=False, callback=None, desired_kl=0.002, fname=None):
-
-    if fname != None:
-        load_result = U.load_state(fname)
-        if load_result:
-            logger.log("Model loaded from file {}".format(fname))
-        else:
-            logger.log("Model failed to load from file {}".format(fname))
-
     obfilter = ZFilter(env.observation_space.shape)
 
     max_pathlength = env.spec.timestep_limit
@@ -72,6 +64,14 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     update_op, q_runner = optim.minimize(loss, loss_sampled, var_list=pi_var_list)
     do_update = U.function(inputs, update_op)
     U.initialize()
+
+    if fname != None:
+        load_result = U.load_state(fname)
+        if load_result:
+            logger.log("Model loaded from file {}".format(fname))
+        else:
+            logger.log("Model failed to load from file {}".format(fname))
+
 
     # start queue runners
     enqueue_threads = []
