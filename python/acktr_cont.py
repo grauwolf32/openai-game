@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
+
 from baselines import logger
 from baselines import common
 from baselines.common import tf_util as U
@@ -65,7 +66,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     do_update = U.function(inputs, update_op)
     U.initialize()
 
-    if fname != None:
+    if fname != None and tf.train.checkpoint_exists(fname):
         load_result = U.load_state(fname)
         if load_result:
             logger.log("Model loaded from file {}".format(fname))
