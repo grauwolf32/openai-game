@@ -15,8 +15,7 @@ def getAngle(x1,y1,x2,y2):
         return 0.0
 
     s /= pr
-
-    alpha = acos(s)
+    alpha = acos(min(1.0, max(-1.0,s)))
 
     if v < 0.0:
         alpha *= -1.0
@@ -51,7 +50,7 @@ target_2[1] = randint(0, world_shape[1])
 
 a = [0.0, 0.0]
 score = 0
-n = 200
+n = 20000
 
 t1 = time.time()
 for i in xrange(0,n):
@@ -76,14 +75,14 @@ for i in xrange(0,n):
         target_2[1] = randint(0, world_shape[1])
         continue
 
-    alpha = 0.0
-    beta = 0.0
+    spl = sin(player[6])
+    cpl = cos(player[6])
 
     # Dummy strategy
     if d1 <= d2:
-        target_angle = getAngle(player[0],player[1],-dd1x,-dd1y)
+        target_angle = getAngle(cpl,spl,-dd1x,-dd1y)
     else:
-        target_angle = getAngle(player[0],player[1],-dd2x,-dd2y)
+        target_angle = getAngle(cpl,spl,-dd2x,-dd2y)
 
     alpha = 1.0
     bval = target_angle / c
@@ -100,8 +99,8 @@ for i in xrange(0,n):
     k = alpha*max_ds
     speed_abs = (player[2]*player[2]+ player[3]*player[3])
 
-    a[0] = k*cos(player[6]) - friction_k*speed_abs*player[2]
-    a[1] = k*sin(player[6]) - friction_k*speed_abs*player[3]
+    a[0] = k*cpl - friction_k*speed_abs*player[2]
+    a[1] = k*spl - friction_k*speed_abs*player[3]
 
     player[6] += player[7]*dt
     player[0] += player[2]*dt
@@ -122,7 +121,6 @@ for i in xrange(0,n):
 
 t2 = time.time()
 print "Elapsed time: {} score: {} iter/sec: {}".format(t2-t1, score, float(n)/(t2-t1))
-
     
 
 
