@@ -152,18 +152,18 @@ class World(object):
                     continue
                     
                 if (player.position - target.position).abs() <= (player.radious + target.radious):
-                    #self.state["player_{}".format(player.id)] += 1.0
-                    ## What to do with target
-                    #pos_x = float(randint(0, self.shape[0]))
-                    #pos_y = float(randint(0, self.shape[1]))
-                    #position = Vec(pos_x, pos_y)
-                    #target.position = position
+                    self.state["player_{}".format(player.id)] += 1.0
+                    # What to do with target
+                    pos_x = float(randint(0, self.shape[0]))
+                    pos_y = float(randint(0, self.shape[1]))
+                    position = Vec(pos_x, pos_y)
+                    target.position = position
                     
                     #If we have number of targets, we can do something like this:
                     #target = steel_alive_target, to keep number of parameters
                     #For now i decide to keep it simple, and just do
 
-                    self.state["done"] = True
+                    #self.state["done"] = True
 
         self.state["targets"] = [target.position for target in self.targets]
         self.state["players"] = [player.position for player in self.players]
