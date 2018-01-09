@@ -12,10 +12,10 @@ from acktr_cont import learn
 from baselines.acktr.policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
 
-from game_env import *
+from micro_env import *
 
 def train(num_timesteps, seed, fname):
-    env=GameEnv(visualization=True)
+    env=GameEnv()
     env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
     env.seed(seed)
@@ -32,7 +32,7 @@ def train(num_timesteps, seed, fname):
         learn(env, policy=policy, vf=vf,
             gamma=0.99, lam=0.97, timesteps_per_batch=6000,
             desired_kl=0.002,
-            num_timesteps=num_timesteps, animate=True, fname=fname)
+            num_timesteps=num_timesteps, animate=False, fname=None)
 
         env.close()
 
