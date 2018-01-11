@@ -6,46 +6,24 @@ import numpy as np
 
 import gym
 import pygame as pg
+
 from game_utils import *
 from gym import error, spaces, utils
 from gym.utils import seeding
 
 
-class GameEnv(gym.Env):
+class GatheringGameEnv(gym.Env):
     def __init__(self, visualization=False):
-        max_dw = 2.0
-        max_ds = 6.0
-        friction_k = 0.013
-        dt = 1.0/2.0
+        self.world_shape = GatheringConstants.world_shape
+        self.params = GatheringConstants.params
 
-        self.world_shape = (480, 360)
-        self.params = (max_dw, max_ds, friction_k, dt)
+        self.action_space = GatheringConstants.ac_space
+        self.observation_space = GatheringConstants.ob_space
 
-        max_speed = sqrt(max_ds / friction_k)
-        max_dist = sqrt(2.0) * max(self.world_shape[0], self.world_shape[1])
-
-        self.action_space = spaces.Box(low=np.array([-1,-1]), high=np.array([1,1]))
-
-        ob_low  = [0.0,  0.0,\
-                  -max_speed,-max_speed,\
-                  -max_ds, -max_ds,\
-                  -1.1*pi , -max_dw,\
-                   -max_dist, -1.1*pi,\
-                   -max_dist, -1.1*pi ]
-
-        ob_high = [self.world_shape[0], self.world_shape[1],\
-                   max_speed, max_speed, max_ds, max_ds,\
-                   1.1*pi, max_dw, \
-                   max_dist, 1.1*pi, \
-                   max_dist, 1.1*pi]
-        
-        self.observation_space = spaces.Box(low=np.array(ob_low), high=np.array(ob_high))
-
-        self._spec = EnvSpec(timestep_limit = 1500, id=1)
+        self._spec = GatheringConstants.spec
         self._seed()
         self._reset()
         
-
         if visualization == True:
             pg.init()
             self.surface = pg.display.set_mode((self.world_shape[0], self.world_shape[1]), 16)
@@ -114,8 +92,8 @@ class GameEnv(gym.Env):
         if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]
 
         reward -= 1.0/1000 # step penalty
-        reward -= abs(self.player[6] - old_phi)/ 100.0 # try to enforce more stationary behaviour
-        reward += speed_abs / 1000.0 # reward for good speed
+        reward -= abs(self.player[6] - old_phi)/ 500.0 # try to enforce more stationary behaviour
+        reward += speed_abs / (3000.0) # reward for good speed, this value is higly entangled with maximum speed (current val ~ 21.5)
 
         if self.player[6] >=  pi: self.player[6] -= 2.0*pi
         if self.player[6] <= -pi: self.player[6] += 2.0*pi
@@ -237,3 +215,4 @@ class GameEnv(gym.Env):
 
     def _close(self):
         pass
+
