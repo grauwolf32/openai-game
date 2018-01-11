@@ -1,40 +1,15 @@
 import os
-import gym
 import time
+from math import *
 
-import pygame as pg
 import numpy as np
 
-from gym import error, spaces
+import gym
+import pygame as pg
+from game_utils import *
+from gym import error, spaces, utils
 from gym.utils import seeding
-from gym import utils
 
-from math import *
-from random import *
-
-def getAngle(x1,y1,x2,y2):
-    s = x1*x2 + y1*y2
-    v = x1*y2 - y1*x2
-
-    l1 = sqrt(x1*x1 + y1*y1)
-    l2 = sqrt(x2*x2 + y2*y2)
-    pr = l1*l2
-
-    if l1 < 10e-6 or l2 < 10e-6 or pr < 10e-5:
-        return 0.0
-
-    s /= pr
-    alpha = acos(min(1.0, max(-1.0,s)))
-
-    if v < 0.0:
-        alpha *= -1.0
-        
-    return alpha 
-
-class EnvSpec(object):
-    def __init__(self, timestep_limit, id):
-        self.timestep_limit = timestep_limit
-        self.id = id
 
 class GameEnv(gym.Env):
     def __init__(self, visualization=False):
@@ -97,18 +72,17 @@ class GameEnv(gym.Env):
 
         #Check targets
         if d1 <= 40.0:
-            self.target_1[0] = randint(0, self.world_shape[0])
-            self.target_1[1] = randint(0, self.world_shape[1])
+            self.target_1[0] = self.np_random.randint(0, self.world_shape[0])
+            self.target_1[1] = self.np_random.randint(0, self.world_shape[1])
             reward += 1.0
     
         if d2 <= 40.0:
-            self.target_2[0] = randint(0, self.world_shape[0])
-            self.target_2[1] = randint(0, self.world_shape[1])
+            self.target_2[0] = self.np_random.randint(0, self.world_shape[0])
+            self.target_2[1] = self.np_random.randint(0, self.world_shape[1])
             reward += 1.0
 
         self.score += reward
 
-        reward -= 1.0/1000
         old_phi = self.player[6]
 
         a = [0.0, 0.0]
@@ -116,6 +90,7 @@ class GameEnv(gym.Env):
         spl = sin(self.player[6])
 
         speed_abs = sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+
         a[0] = k*cpl - self.params[2]*speed_abs*self.player[2]
         a[1] = k*spl - self.params[2]*speed_abs*self.player[3]
 
@@ -138,7 +113,9 @@ class GameEnv(gym.Env):
         if self.player[0] > self.world_shape[0]: self.player[0] = self.world_shape[0]
         if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]
 
-        reward -= abs(self.player[6] - old_phi)/ 100.0
+        reward -= 1.0/1000 # step penalty
+        reward -= abs(self.player[6] - old_phi)/ 100.0 # try to enforce more stationary behaviour
+        reward += speed_abs / 1000.0 # reward for good speed
 
         if self.player[6] >=  pi: self.player[6] -= 2.0*pi
         if self.player[6] <= -pi: self.player[6] += 2.0*pi
@@ -239,6 +216,18 @@ class GameEnv(gym.Env):
 
             self.surface.blit(im, (self.target_1[0]-w, self.target_1[1]-h))
             self.surface.blit(im, (self.target_2[0]-w, self.target_2[1]-h))
+
+            speed_abs = sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+            
+            text = "score : {}".format(self.score)
+            info = self.font.render(text, True, (0,0,0))
+            size = self.font.size(text)
+            self.surface.blit(info, (self.world_shape[0]-size[0]-20, 10))
+
+            text = "speed : {}".format(speed_abs)
+            info = self.font.render(text, True, (0,0,0))
+            self.surface.blit(info, (self.world_shape[0]-size[0] -20, (size[1]+3) + 10))
+
             pg.display.flip()
             time.sleep(0.01)
 
