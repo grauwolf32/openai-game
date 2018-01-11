@@ -1,5 +1,6 @@
 import os
 import gym
+import time
 
 import pygame as pg
 import numpy as np
@@ -105,8 +106,10 @@ class GameEnv(gym.Env):
             self.target_2[1] = randint(0, self.world_shape[1])
             reward += 1.0
 
-        reward -= 1.0/1000
         self.score += reward
+
+        reward -= 1.0/1000
+        old_phi = self.player[6]
 
         a = [0.0, 0.0]
         cpl = cos(self.player[6])
@@ -134,6 +137,8 @@ class GameEnv(gym.Env):
         if self.player[1] < 0.0: self.player[1] = 0.0
         if self.player[0] > self.world_shape[0]: self.player[0] = self.world_shape[0]
         if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]
+
+        reward -= abs(self.player[6] - old_phi)/ 100.0
 
         if self.player[6] >=  pi: self.player[6] -= 2.0*pi
         if self.player[6] <= -pi: self.player[6] += 2.0*pi
@@ -235,6 +240,7 @@ class GameEnv(gym.Env):
             self.surface.blit(im, (self.target_1[0]-w, self.target_1[1]-h))
             self.surface.blit(im, (self.target_2[0]-w, self.target_2[1]-h))
             pg.display.flip()
+            time.sleep(0.01)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
