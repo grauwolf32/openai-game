@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
+from baselines.acktr.policies import GaussianMlpPolicy
+
 from baselines.common import tf_util as U
 from gym import error, spaces, utils
 from math import *
@@ -31,18 +33,25 @@ class EnvSpec(object):
 
 class AIRunner(object):
     def __init__(self, ob_space, ac_space ,fname):
-        self.ob_shape = ob_space.ob_shape
+        self.ob_shape = ob_space.shape
         self.ac_space = ac_space
-        self.ob = np.float32(np.zeros(ob_shape))
-        self.prev_ob = np.float32(np.zeros(ob_shape))
+        self.ob = np.float32(np.zeros(self.ob_shape))
+        self.prev_ob = np.float32(np.zeros(self.ob_shape))
+
+        ob_dim = self.ob_shape[0]
+        ac_dim = self.ac_space.shape[0]
+
+        with tf.variable_scope("pi"):
+            self.policy = GaussianMlpPolicy(ob_dim, ac_dim)
 
     def step(self, ob):
         state = np.concatenate([ob, self.prev_ob], -1)
-        ac, ac_dist, logp = policy.act(state)
+        ac, ac_dist, logp = self.policy.act(state)
         self.prev_ob = np.copy(ob)
 
         scaled_ac = self.ac_space.low + (ac + 1.) * 0.5 * (self.ac_space.high - self.ac_space.low)
         scaled_ac = np.clip(scaled_ac, self.ac_space.low, self.ac_space.high)
+
         return scaled_ac
 
 # Some globals
@@ -53,16 +62,24 @@ class GatheringConstantsClass(object):
         max_dw = 2.0
         max_ds = 6.0
         friction_k = 0.013
-        dt = 1.0/2.0
+        dt = 1.0/3.0
 
-        world_shape = (120, 1000)
+        world_shape = (480, 360)#(640, 480)
         self.world_shape = world_shape
 
-        max_speed = sqrt(max_ds / friction_k)
-        max_dist  = sqrt(self.world_shape[0]**2 + self.world_shape[1]**2)
-
         self.params = (max_dw, max_ds, friction_k, dt)
-        self.spec = EnvSpec(timestep_limit = 1500, id=1)
+
+        timestep_limit = 1500
+        self.spec = EnvSpec(timestep_limit = timestep_limit , id=1)
+
+        step_penalty_reward = -2.0 / timestep_limit
+        dw_penalty_reward   = -1.8 / timestep_limit
+        high_speed_reward   = 1.0 / timestep_limit
+        target_reward       = 3.0
+
+        self.rewards = (target_reward, step_penalty_reward, dw_penalty_reward, high_speed_reward)
+        max_speed = sqrt(max_ds / friction_k)
+        max_dist  = sqrt(world_shape[0]*world_shape[0] + world_shape[1]*world_shape[1])
 
         ob_low  = [0.0,  0.0,\
             -max_speed,-max_speed,\

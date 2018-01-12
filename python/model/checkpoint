@@ -1,2 +1,2 @@
-model_checkpoint_path: "/home/ruslan/openai/openai-game/python/model/gathering_ai.ckpt"
-all_model_checkpoint_paths: "/home/ruslan/openai/openai-game/python/model/gathering_ai.ckpt"
+model_checkpoint_path: "/home/grauwolf32/openai-game/python/model/gathering_ai.ckpt"
+all_model_checkpoint_paths: "/home/grauwolf32/openai-game/python/model/gathering_ai.ckpt"

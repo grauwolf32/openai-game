@@ -15,7 +15,7 @@ from baselines.acktr.value_functions import NeuralNetValueFunction
 
 from micro_env import *
 
-visualization = True
+visualization = False
 
 def train(num_timesteps, seed, fname):
     env=GatheringGameEnv(visualization=visualization)

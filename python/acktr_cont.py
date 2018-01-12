@@ -92,6 +92,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
         if fname != None and (i % 100 == 99):
             U.save_state(fname)
             logger.log("Model saved to file {}".format(fname))
+            env.seed()
 
         # Collect paths until we have enough timesteps
         timesteps_this_batch = 0

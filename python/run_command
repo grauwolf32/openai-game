@@ -1,3 +1,3 @@
 export OPENAI_LOGDIR=~/openai-game/log
 export OPENAI_LOG_FORMAT=tensorboard,stdout
-python3 run_acktr.py --fname=~/openai-game/model/gathering_ai.ckpt
+python3 run_acktr.py --fname=~/openai-game/python/model/gathering_ai.ckpt

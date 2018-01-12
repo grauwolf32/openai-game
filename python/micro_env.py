@@ -20,6 +20,7 @@ class GatheringGameEnv(gym.Env):
         self.action_space = GatheringConstants.ac_space
         self.observation_space = GatheringConstants.ob_space
 
+        self.rewards = GatheringConstants.rewards
         self._spec = GatheringConstants.spec
         self._seed()
         self._reset()
@@ -52,14 +53,14 @@ class GatheringGameEnv(gym.Env):
         if d1 <= 40.0:
             self.target_1[0] = self.np_random.randint(0, self.world_shape[0])
             self.target_1[1] = self.np_random.randint(0, self.world_shape[1])
-            reward += 1.0
+            reward += self.rewards[0]
+            self.score += 1.0
     
         if d2 <= 40.0:
             self.target_2[0] = self.np_random.randint(0, self.world_shape[0])
             self.target_2[1] = self.np_random.randint(0, self.world_shape[1])
-            reward += 1.0
-
-        self.score += reward
+            reward += self.rewards[0]
+            self.score += 1.0
 
         old_phi = self.player[6]
 
@@ -86,14 +87,14 @@ class GatheringGameEnv(gym.Env):
 
         # World reaction
         
-        if self.player[0] < 0.0: self.player[0] = 0.0
-        if self.player[1] < 0.0: self.player[1] = 0.0
-        if self.player[0] > self.world_shape[0]: self.player[0] = self.world_shape[0]
-        if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]
+        if self.player[0] < 0.0: self.player[0] = 0.0; speed_abs = 0.0
+        if self.player[1] < 0.0: self.player[1] = 0.0; speed_abs = 0.0
+        if self.player[0] > self.world_shape[0]: self.player[0] = self.world_shape[0]; speed_abs = 0.0
+        if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]; speed_abs = 0.0
 
-        reward -= 1.0/1000 # step penalty
-        reward -= abs(self.player[6] - old_phi)/ 500.0 # try to enforce more stationary behaviour
-        reward += speed_abs / (3000.0) # reward for good speed, this value is higly entangled with maximum speed (current val ~ 21.5)
+        reward += abs(self.player[6] - old_phi) * self.rewards[2] # try to enforce more stationary behaviour
+        reward += speed_abs * self.rewards[3] # reward for good speed, this value is higly entangled with maximum speed (current val ~ 21.5)
+        reward += self.rewards[1] # step penalty 
 
         if self.player[6] >=  pi: self.player[6] -= 2.0*pi
         if self.player[6] <= -pi: self.player[6] += 2.0*pi
