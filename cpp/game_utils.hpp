@@ -68,7 +68,7 @@ namespace game{
     class Unit{
         public:
             Unit(vec2d p, vec2d d, double r, size_t Id):position(p),direction(d),radious(r),id(Id){};
-            
+            Unit():position(vec2d()),direction(vec2d()),radious(0.0),id(0){};
             
             vec2d position;
             vec2d direction;
@@ -79,9 +79,8 @@ namespace game{
 
     class MovableUnit: public Unit{
         public:
-            MovableUnit(vec2d p, vec2d d, double r, size_t Id, double Max_ds, double Max_dw, double Friction_k)://Unit(p,d,r,Id)
+            MovableUnit(vec2d p, vec2d d, double r, size_t Id, double Max_ds, double Max_dw, double Friction_k):Unit(p,d,r,Id)
             {
-                Unit();
                 max_ds = Max_ds;
                 max_dw = Max_dw;
                 friction_k = Friction_k;
@@ -145,7 +144,7 @@ namespace game{
             Strategy<Tuple>* strategy;
     };
 
-    class ControlledUnit: public MovableUnit{
+    class ControlledUnit:public MovableUnit{
         public:
             ControlledUnit(vec2d p, vec2d d, double r, size_t Id, double Max_ds, double Max_dw, double Friction_k, StrategyController c):MovableUnit(p,d,r,Id,Max_ds,Max_dw,Friction_k), controller(c) {
                 controller.bind_unit(this);
@@ -153,7 +152,7 @@ namespace game{
             StrategyController controller;
     };
 
-    class TargetFollowStrategy: public Strategy<Tuple>{
+    class TargetFollowStrategy:public Strategy<Tuple>{
         public:
             Tuple implement(World& world);
     };
