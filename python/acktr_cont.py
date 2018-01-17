@@ -17,6 +17,7 @@ def rollout(env, policy, max_pathlength, animate=False, obfilter=None):
     """
     ob = env.reset()
     prev_ob = np.float32(np.zeros(ob.shape))
+
     if obfilter: ob = obfilter(ob)
     terminated = False
 
@@ -38,8 +39,10 @@ def rollout(env, policy, max_pathlength, animate=False, obfilter=None):
         scaled_ac = env.action_space.low + (ac + 1.) * 0.5 * (env.action_space.high - env.action_space.low)
         scaled_ac = np.clip(scaled_ac, env.action_space.low, env.action_space.high)
         ob, rew, done, _ = env.step(scaled_ac)
+
         if obfilter: ob = obfilter(ob)
         rewards.append(rew)
+
         if done:
             terminated = True
             break
@@ -133,6 +136,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
 
         min_stepsize = np.float32(1e-8)
         max_stepsize = np.float32(1e0)
+
         # Adjust stepsize
         kl = policy.compute_kl(ob_no, oldac_dist)
         if kl > desired_kl * 2:
@@ -148,6 +152,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
         logger.record_tabular("EpRewSEM", np.std([path["reward"].sum()/np.sqrt(len(paths)) for path in paths]))
         logger.record_tabular("EpLenMean", np.mean([pathlength(path) for path in paths]))
         logger.record_tabular("KL", kl)
+        
         if callback:
             callback()
         logger.dump_tabular()

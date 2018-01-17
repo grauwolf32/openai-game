@@ -15,7 +15,7 @@ from baselines.acktr.value_functions import NeuralNetValueFunction
 
 from micro_env import *
 
-visualization = False
+visualization = True
 
 def train(num_timesteps, seed, fname):
     env=GatheringGameEnv(visualization=visualization)
@@ -36,10 +36,12 @@ def train(num_timesteps, seed, fname):
                 gamma=0.99, lam=0.97, timesteps_per_batch=4500,
                 desired_kl=0.002,
                 num_timesteps=num_timesteps, animate=visualization, fname=fname)
+                
         except KeyboardInterrupt:
             if fname != None:
                 U.save_state(fname)
                 logger.log("Model saved to file {}".format(fname))
+                pass
 
         env.close()
 

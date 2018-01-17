@@ -32,7 +32,7 @@ class EnvSpec(object):
         self.id = id
 
 class AIRunner(object):
-    def __init__(self, ob_space, ac_space ,fname):
+    def __init__(self, ob_space, ac_space):
         self.ob_shape = ob_space.shape
         self.ac_space = ac_space
         self.ob = np.float32(np.zeros(self.ob_shape))
