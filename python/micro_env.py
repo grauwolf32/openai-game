@@ -181,7 +181,7 @@ class GatheringGameEnv(gym.Env):
     def _render(self, mode='human', close=False):
         if mode == 'human':
             self.surface.fill((255,255,255))
-            phi = -(180.0/pi)*self.player[6] - 90.0
+            phi = -(180.0/pi)*self.player[6] - 90.0 -180.0
             im =  pg.transform.rotate(self.player_sprite, phi)
             h = im.get_height()/2.0
             w = im.get_width()/2.0
