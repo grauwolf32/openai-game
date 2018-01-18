@@ -31,29 +31,6 @@ class EnvSpec(object):
         self.timestep_limit = timestep_limit
         self.id = id
 
-class AIRunner(object):
-    def __init__(self, ob_space, ac_space):
-        self.ob_shape = ob_space.shape
-        self.ac_space = ac_space
-        self.ob = np.float32(np.zeros(self.ob_shape))
-        self.prev_ob = np.float32(np.zeros(self.ob_shape))
-
-        ob_dim = self.ob_shape[0]
-        ac_dim = self.ac_space.shape[0]
-
-        with tf.variable_scope("pi"):
-            self.policy = GaussianMlpPolicy(ob_dim, ac_dim)
-
-    def step(self, ob):
-        state = np.concatenate([ob, self.prev_ob], -1)
-        ac, ac_dist, logp = self.policy.act(state)
-        self.prev_ob = np.copy(ob)
-
-        scaled_ac = self.ac_space.low + (ac + 1.) * 0.5 * (self.ac_space.high - self.ac_space.low)
-        scaled_ac = np.clip(scaled_ac, self.ac_space.low, self.ac_space.high)
-
-        return scaled_ac
-
 # Some globals
 
 
@@ -62,9 +39,9 @@ class GatheringConstantsClass(object):
         max_dw = 2.0
         max_ds = 6.0
         friction_k = 0.013
-        dt = 1.0/3.0
+        dt = 1.0/2.0
 
-        world_shape = (480, 360)#(640, 480)
+        world_shape = (480, 360)
         self.world_shape = world_shape
 
         self.params = (max_dw, max_ds, friction_k, dt)

@@ -208,7 +208,7 @@ class GatheringGameEnv(gym.Env):
             self.surface.blit(info, (self.world_shape[0]-size[0] -20, (size[1]+3) + 10))
 
             pg.display.flip()
-            time.sleep(0.01)
+            time.sleep(0.02)
 
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
