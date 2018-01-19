@@ -18,7 +18,7 @@ from micro_env import *
 visualization = True
 
 def train(num_timesteps, seed, fname):
-    env=GatheringGameEnv(visualization=visualization)
+    env=DummyPursuitGameEnv(visualization=visualization) #GatheringGameEnv(visualization=visualization)
     env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
     env.seed(seed)

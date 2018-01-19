@@ -1,2 +1,2 @@
-model_checkpoint_path: "gathering_ai.ckpt"
-all_model_checkpoint_paths: "gathering_ai.ckpt"
+model_checkpoint_path: "pursuit_ai.ckpt"
+all_model_checkpoint_paths: "pursuit_ai.ckpt"
