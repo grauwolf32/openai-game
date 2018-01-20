@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run gathering game with AI')
     parser.add_argument('--fname', type=str, default=None)
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
+    parser.add_argument('--env', type=str, default='gathering')
     args = parser.parse_args()
 
     run_game(fname=args.fname, seed=args.seed)

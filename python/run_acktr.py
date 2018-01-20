@@ -13,12 +13,16 @@ from acktr_cont import learn
 from baselines.acktr.policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
 
-from micro_env import *
+from game_utils import *
 
 visualization = True
 
-def train(num_timesteps, seed, fname):
-    env=DummyPursuitGameEnv(visualization=visualization) #GatheringGameEnv(visualization=visualization)
+def train(num_timesteps, seed, env_name, fname):
+    env = make_env(env_name, visualization)
+    if env == None:
+        logger.log("Empty environment")
+        return
+        
     env = bench.Monitor(env, logger.get_dir(),  allow_early_resets=True)
     set_global_seeds(seed)
     env.seed(seed)
@@ -49,7 +53,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run Mujoco benchmark.')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--fname', type=str, default=None)
+    parser.add_argument('--env', type=str, default='gathering')
     parser.add_argument('--num-timesteps', type=int, default=int(1e9))
     args = parser.parse_args()
     logger.configure()
-    train(num_timesteps=args.num_timesteps, seed=args.seed, fname=args.fname)
+    train(num_timesteps=args.num_timesteps, seed=args.seed, env_name=args.env, fname=args.fname)

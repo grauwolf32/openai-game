@@ -147,8 +147,6 @@ for _ in iter(range(0,1500*100)):
         pg.display.flip()
         time.sleep(0.01)
 
-print("Score: {}".format(score))
-
 
 
 
