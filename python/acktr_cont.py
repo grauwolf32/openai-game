@@ -8,6 +8,9 @@ from baselines.common import tf_util as U
 from baselines.acktr import kfac
 from baselines.acktr.filters import ZFilter
 
+def get_session():
+    return tf.get_default_session()
+
 def pathlength(path):
     return path["reward"].shape[0]# Loss function that we'll differentiate to get the policy gradient
 
@@ -78,7 +81,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     coord = tf.train.Coordinator()
     for qr in [q_runner, vf.q_runner]:
         assert (qr != None)
-        enqueue_threads.extend(qr.create_threads(U.get_session(), coord=coord, start=True))
+        enqueue_threads.extend(qr.create_threads(get_session(), coord=coord, start=True))
 
     i = 0
     timesteps_so_far = 0
