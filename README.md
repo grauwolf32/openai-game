@@ -20,7 +20,7 @@ OPTIONS:
 
 To run game simulation:
 ```
-python3 run_acktr.py
+python3 ai_runner.py
 
 OPTIONS:
 --fname - path to checkpoint file (required)
