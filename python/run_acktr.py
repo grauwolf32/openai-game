@@ -10,7 +10,7 @@ from baselines.common import tf_util as U
 from baselines import bench
 
 from acktr_cont import learn
-from baselines.acktr.policies import GaussianMlpPolicy
+from policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
 
 from game_utils import *
@@ -52,9 +52,10 @@ def train(num_timesteps, seed, env_name, fname):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run Mujoco benchmark.')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
-    parser.add_argument('--fname', type=str, default=None)
+    parser.add_argument('--fname', type=str )
     parser.add_argument('--env', type=str, default='gathering')
     parser.add_argument('--num-timesteps', type=int, default=int(1e9))
     args = parser.parse_args()
     logger.configure()
+    
     train(num_timesteps=args.num_timesteps, seed=args.seed, env_name=args.env, fname=args.fname)

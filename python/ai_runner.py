@@ -2,16 +2,14 @@ import os
 import argparse
 
 from game_utils import *
-from micro_env import *
 from baselines.common import tf_util as U
 from baselines.common import set_global_seeds
 from baselines.acktr.filters import ZFilter
 
-
 visualization = True
 
-def run_game(fname, seed):
-    env = GatheringGameEnv(visualization=visualization)
+def run_game(fname, seed, envname):
+    env = make_env(envname, visualization=visualization)
     obfilter = ZFilter(env.observation_space.shape)
 
     set_global_seeds(seed)
@@ -51,9 +49,9 @@ def run_game(fname, seed):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run gathering game with AI')
-    parser.add_argument('--fname', type=str, default=None)
+    parser.add_argument('--fname', type=str, required=True, help='path to the checkpoint')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
-    parser.add_argument('--env', type=str, default='gathering')
+    parser.add_argument('--env', type=str, default='gathering', help="Name of the environment (gathering by default)")
     args = parser.parse_args()
 
-    run_game(fname=args.fname, seed=args.seed)
+    run_game(fname=args.fname, seed=args.seed, envname=args.env)
