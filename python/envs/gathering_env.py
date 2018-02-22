@@ -23,9 +23,9 @@ class GatheringGameEnv(gym.Env):
         self.observation_space = GatheringConstants.ob_space
 
         self.rewards = GatheringConstants.rewards
-        self._spec = GatheringConstants.spec
-        self._seed()
-        self._reset()
+        self.spec = GatheringConstants.spec
+        self.seed()
+        self.reset()
         
         if visualization == True:
             pg.init()
@@ -35,7 +35,7 @@ class GatheringGameEnv(gym.Env):
             self.font = pg.font.SysFont("Times New Roman",12)
             self.metadata["render.modes"].append("human")
 
-    def _step(self, action): 
+    def step(self, action): 
         alpha = action[0]
         beta = action[1]
         reward = 0.0
@@ -127,7 +127,7 @@ class GatheringGameEnv(gym.Env):
         return np.array(ob), reward, done, info 
 
         
-    def _reset(self): 
+    def reset(self): 
         self.player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.target_1 = [0.0, 0.0]
         self.target_2 = [0.0, 0,0]
@@ -179,7 +179,7 @@ class GatheringGameEnv(gym.Env):
 
         return np.array(ob)
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
         if mode == 'human':
             self.surface.fill((255,255,255))
             phi = -(180.0/pi)*self.player[6] - 90.0 -180.0
@@ -211,9 +211,9 @@ class GatheringGameEnv(gym.Env):
             pg.display.flip()
             time.sleep(0.008)
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _close(self):
+    def close(self):
         pass

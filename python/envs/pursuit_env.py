@@ -23,9 +23,9 @@ class PursuitGameEnv(gym.Env):
         self.observation_space = PursuitConstants.ob_space
 
         self.rewards = PursuitConstants.rewards
-        self._spec = PursuitConstants.spec
-        self._seed()
-        self._reset()
+        self.spec = PursuitConstants.spec
+        self.seed()
+        self.reset()
         
         if visualization == True:
             pg.init()
@@ -35,7 +35,7 @@ class PursuitGameEnv(gym.Env):
             self.font = pg.font.SysFont("Times New Roman",12)
             self.metadata["render.modes"].append("human")
 
-    def _step(self, action): 
+    def step(self, action): 
         alpha = action[0] 
         beta = action[1]
         reward = 0.0
@@ -144,7 +144,7 @@ class PursuitGameEnv(gym.Env):
         return np.array(ob), reward, done, info 
 
         
-    def _reset(self): 
+    def reset(self): 
         self.player_1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.player_2 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -178,7 +178,7 @@ class PursuitGameEnv(gym.Env):
 
         return np.array(ob)
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
         if mode == 'human':
             self.surface.fill((255,255,255))
             phi = -(180.0/pi)*self.player_1[6] - 90.0
@@ -218,9 +218,9 @@ class PursuitGameEnv(gym.Env):
             pg.display.flip()
             time.sleep(0.02)
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _close(self):
+    def close(self):
         pass
