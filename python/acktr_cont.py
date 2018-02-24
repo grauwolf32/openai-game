@@ -11,6 +11,20 @@ from baselines.acktr.filters import ZFilter
 def get_session():
     return tf.get_default_session()
 
+def load_state(fname):
+    saver = tf.train.Saver()
+    saver.restore(get_session(), fname)
+
+def save_state(fname):
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+    saver = tf.train.Saver()
+    saver.save(get_session(), fname)
+
+def eval(expr, feed_dict=None):
+    if feed_dict is None:
+        feed_dict = {}
+    return get_session().run(expr, feed_dict=feed_dict)
+
 def pathlength(path):
     return path["reward"].shape[0]# Loss function that we'll differentiate to get the policy gradient
 
@@ -73,7 +87,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
     U.initialize()
 
     if fname != None and tf.train.checkpoint_exists(fname):
-        load_result = U.load_state(fname)
+        load_result = load_state(fname)
         logger.log("Model loaded from file {}".format(fname))
 
     # start queue runners
@@ -92,7 +106,7 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
 
         # Save model every 100 iterations
         if fname != None and (i % 100 == 99):
-            U.save_state(fname)
+            save_state(fname)
             logger.log("Model saved to file {}".format(fname))
             env.seed()
 
@@ -140,10 +154,10 @@ def learn(env, policy, vf, gamma, lam, timesteps_per_batch, num_timesteps,
         kl = policy.compute_kl(ob_no, oldac_dist)
         if kl > desired_kl * 2:
             logger.log("kl too high")
-            U.eval(tf.assign(stepsize, tf.maximum(min_stepsize, stepsize / 1.5)))
+            eval(tf.assign(stepsize, tf.maximum(min_stepsize, stepsize / 1.5)))
         elif kl < desired_kl / 2:
             logger.log("kl too low")
-            U.eval(tf.assign(stepsize, tf.minimum(max_stepsize, stepsize * 1.5)))            
+            eval(tf.assign(stepsize, tf.minimum(max_stepsize, stepsize * 1.5)))            
         else:
             logger.log("kl just right!")
 

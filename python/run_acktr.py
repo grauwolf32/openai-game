@@ -9,7 +9,7 @@ from baselines.common import set_global_seeds
 from baselines.common import tf_util as U
 from baselines import bench
 
-from acktr_cont import learn
+from acktr_cont import learn, save_state
 from policies import GaussianMlpPolicy
 from baselines.acktr.value_functions import NeuralNetValueFunction
 
@@ -43,7 +43,7 @@ def train(num_timesteps, seed, env_name, fname):
                 
         except KeyboardInterrupt:
             if fname != None:
-                U.save_state(fname)
+                save_state(fname)
                 logger.log("Model saved to file {}".format(fname))
                 pass
 
