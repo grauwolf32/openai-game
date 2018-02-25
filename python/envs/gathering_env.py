@@ -128,10 +128,10 @@ class GatheringGameEnv(gym.Env):
 
         
     def reset(self): 
-        self.player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.target_1 = [0.0, 0.0]
-        self.target_2 = [0.0, 0,0]
-
+        self.player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # x, y, v_x, v_y, a_x, a_y, phi, omega
+        self.target_1 = [0.0, 0.0] #(x, y) - player position (v_x, v_y) - velocity (a_x, a_y) - acceleration
+        self.target_2 = [0.0, 0,0] # phi - player direction angle (from Ox), omega - angular velocity (d(phi)/ dt) 
+ 
         rx = self.np_random.random_integers(0, self.world_shape[0],3)
         ry = self.np_random.random_integers(0, self.world_shape[1],3)
 

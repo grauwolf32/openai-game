@@ -4,7 +4,7 @@ import pygame as pg
 from random import *
 from math import *
 
-def getAngle(x1,y1,x2,y2):
+def getAngle(x1,y1,x2,y2): # return angle between two vectors (x1,y1) and (x2, y2)
     s = x1*x2 + y1*y2
     v = x1*y2 - y1*x2
 
@@ -34,17 +34,18 @@ if visualization:
     target_sprite = pg.image.load("Circle.png").convert()
     font = pg.font.SysFont("Times New Roman",12)
 
-max_dw = 2.0
-max_ds = 6.0
+max_dw = 2.0 # maximum of the angular velocity
+max_ds = 6.0 # maximum of the velocity abs 
+
 friction_k = 0.013
 dt = 1.0/3.0
 
 c  = sqrt(max_dw)
 rs = 20 + 20 # sum of radious
 
-player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0]
-target_1 = [0.0, 0.0]
-target_2 = [0.0, 0,0]
+player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0] # x, y, v_x, v_y, a_x, a_y, phi, omega
+target_1 = [0.0, 0.0] #(x, y) - player position (v_x, v_y) - velocity (a_x, a_y) - acceleration
+target_2 = [0.0, 0,0] # phi - player direction angle (from Ox), omega - angular velocity (d(phi)/ dt) 
 
 player[0] = randint(0, world_shape[0]) 
 player[1] = randint(0, world_shape[1]) 
@@ -65,8 +66,8 @@ for _ in iter(range(0,1500*100)):
     dd2x = player[0] - target_2[0]
     dd2y = player[1] - target_2[1]
 
-    d1 = sqrt(dd1x*dd1x + dd1y*dd1y)
-    d2 = sqrt(dd2x*dd2x + dd2y*dd2y)
+    d1 = sqrt(dd1x*dd1x + dd1y*dd1y) # distance to target_1
+    d2 = sqrt(dd2x*dd2x + dd2y*dd2y) # distance to target_2
 
     #Check targets
     if d1 <= rs:
@@ -90,6 +91,7 @@ for _ in iter(range(0,1500*100)):
     else:
         target_angle = getAngle(cpl,spl,-dd2x,-dd2y)
 
+    # physical stuff
     alpha = 1.0
     bval = target_angle / c
     beta = min(1.0, max(bval,-1.0))

@@ -122,7 +122,7 @@ class PursuitGameEnv(gym.Env):
         if self.player_2[1] > self.world_shape[1]: self.player_2[1] = self.world_shape[1]; p2_speed_abs = 0.0
 
         #reward += abs(self.player_1[6] - old_phi) * self.rewards[2] # try to enforce more stationary behaviour
-        reward += p2_speed_abs * self.rewards[2] # reward for good speed, this value is higly entangled with maximum speed (current val ~ 21.5)
+        reward += p2_speed_abs * self.rewards[2] # reward for good speed, this value is higly depends on maximum speed (current val ~ 21.5)
         reward += self.rewards[1] # step reward
         reward += (d1-60.0)*self.rewards[3] # distance reward
 
@@ -132,21 +132,32 @@ class PursuitGameEnv(gym.Env):
         if self.player_2[6] >=  pi: self.player_2[6] -= 2.0*pi
         if self.player_2[6] <= -pi: self.player_2[6] += 2.0*pi
 
+        # pursuer coordinates from target point of view
+        p1relative_x = self.player_2[0] - self.player_1[0]
+        p1relative_y = self.player_2[1] - self.player_1[1]
+
+        # pursuer velocity from target point of view
+        p1relv_x = self.player_2[2] - self.player_1[2]
+        p1relv_y = self.player_2[3] - self.player_1[3]
+
+        # pursuer relative phi
+        p1relphi = self.player_2[6] - self.player_1[6]
+
         ob = [self.player_2[0],self.player_2[1],\
               self.player_2[2],self.player_2[3],\
               self.player_2[4],self.player_2[5],\
               self.player_2[6],self.player_2[7],\
-              self.player_1[0],self.player_1[1],\
-              self.player_1[2],self.player_1[3],\
-              self.player_1[6], d1] # t1a ? p1 speed ?
-
+              p1relative_x, p1relative_y,\
+              p1relv_x, p1relv_y,\
+              p1relphi, d1] # t1a ? p1 speed ?
+              
         info = dict()
         return np.array(ob), reward, done, info 
 
         
     def reset(self): 
-        self.player_1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.player_2 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.player_1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # x, y, v_x, v_y, a_x, a_y, phi, omega
+        self.player_2 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # x, y, v_x, v_y, a_x, a_y, phi, omegas
 
         rx = self.np_random.random_integers(0, self.world_shape[0],2)
         ry = self.np_random.random_integers(0, self.world_shape[1],2)
@@ -168,13 +179,24 @@ class PursuitGameEnv(gym.Env):
         #spl = sin(self.player_1[6])
         #t1a = getAngle(cpl, spl, -dx1, -dy1)
 
+        # pursuer coordinates from target point of view
+        p1relative_x = self.player_2[0] - self.player_1[0]
+        p1relative_y = self.player_2[1] - self.player_1[1]
+
+        # pursuer velocity from target point of view
+        p1relv_x = self.player_2[2] - self.player_1[2]
+        p1relv_y = self.player_2[3] - self.player_1[3]
+
+        # pursuer relative phi
+        p1relphi = self.player_2[6] - self.player_1[6]
+
         ob = [self.player_2[0],self.player_2[1],\
               self.player_2[2],self.player_2[3],\
               self.player_2[4],self.player_2[5],\
               self.player_2[6],self.player_2[7],\
-              self.player_1[0],self.player_1[1],\
-              self.player_1[2],self.player_1[3],\
-              self.player_1[6], d1] # t1a ? p1 speed ?
+              p1relative_x, p1relative_y,\
+              p1relv_x, p1relv_y,\
+              p1relphi, d1] # t1a ? p1 speed ?
 
         return np.array(ob)
 
