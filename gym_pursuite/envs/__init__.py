@@ -1,0 +1,2 @@
+from gym_pursuite.envs.pursuit_env import PursuitGameEnv
+from gym_pursuite.envs.gathering_env import GatheringGameEnv

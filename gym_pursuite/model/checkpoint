@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/grauwolf32/openai-game/python/model/pursuit.ckpt"
+all_model_checkpoint_paths: "/home/grauwolf32/openai-game/python/model/pursuit.ckpt"
