@@ -23,6 +23,7 @@ class GatheringGameEnv(gym.Env):
 
         self.rewards = GatheringConstants.rewards
         self.spec = GatheringConstants.spec
+        
         self.render_init = False
         self.seed()
         self.reset()
@@ -46,11 +47,12 @@ class GatheringGameEnv(gym.Env):
 
         dd1x = self.player[0] - self.target_1[0]
         dd1y = self.player[1] - self.target_1[1]
+
         dd2x = self.player[0] - self.target_2[0]
         dd2y = self.player[1] - self.target_2[1]
 
-        d1 = sqrt(dd1x*dd1x + dd1y*dd1y)
-        d2 = sqrt(dd2x*dd2x + dd2y*dd2y)
+        d1 = np.sqrt(dd1x*dd1x + dd1y*dd1y)
+        d2 = np.sqrt(dd2x*dd2x + dd2y*dd2y)
 
         #Check targets
         if d1 <= 40.0:
@@ -67,11 +69,11 @@ class GatheringGameEnv(gym.Env):
 
         old_phi = self.player[6]
 
-        a = [0.0, 0.0]
-        cpl = cos(self.player[6])
-        spl = sin(self.player[6])
+        a = np.zeros(2)
+        cpl = np.cos(self.player[6])
+        spl = np.sin(self.player[6])
 
-        speed_abs = sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+        speed_abs = np.sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
 
         a[0] = k*cpl - self.params[2]*speed_abs*self.player[2]
         a[1] = k*spl - self.params[2]*speed_abs*self.player[3]
@@ -90,19 +92,39 @@ class GatheringGameEnv(gym.Env):
 
         # World reaction
         
-        if self.player[0] < 0.0: self.player[0] = 0.0; speed_abs = 0.0
-        if self.player[1] < 0.0: self.player[1] = 0.0; speed_abs = 0.0
-        if self.player[0] > self.world_shape[0]: self.player[0] = self.world_shape[0]; speed_abs = 0.0
-        if self.player[1] > self.world_shape[1]: self.player[1] = self.world_shape[1]; speed_abs = 0.0
+        if self.player[0] < 0.0: 
+            self.player[0] = 0.0
+            self.player[2] = 0.0
 
-        reward += abs(self.player[6] - old_phi) * self.rewards[2] # try to enforce more stationary behaviour
+        if self.player[1] < 0.0:
+            self.player[1] = 0.0
+            self.player[3] = 0.0
+
+        if self.player[0] > self.world_shape[0]:
+            self.player[0] = self.world_shape[0]
+            self.player[2] = 0.0
+
+        if self.player[1] > self.world_shape[1]:
+            self.player[1] = self.world_shape[1]
+            self.player[3] = 0.0
+
+        speed_abs = np.sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+        if speed_abs >= self.params[4]:
+            self.player[2] = cpl * self.params[4]
+            self.player[3] = spl * self.params[4]
+
+
+        reward += np.abs(self.player[6] - old_phi) * self.rewards[2] # try to enforce more stationary behaviour
         reward += speed_abs * self.rewards[3] # reward for good speed, this value is higly entangled with maximum speed (current val ~ 21.5)
         reward += self.rewards[1] # step penalty 
 
-        if self.player[6] >=  pi: self.player[6] -= 2.0*pi
-        if self.player[6] <= -pi: self.player[6] += 2.0*pi
+        if self.player[6] >= 2.0*np.pi:
+            self.player[6]-= 2.0*np.pi
+        elif self.player[6] <= -2.0*np.pi:
+            self.player[6] += 2.0*np.pi
 
-        if self.score < -10.0: done = True
+        if self.score < -10.0: 
+            done = True
 
         t1a = getAngle(cpl, spl, -dd1x, -dd1y)
         t2a = getAngle(cpl, spl, -dd2x, -dd2y)
@@ -124,22 +146,23 @@ class GatheringGameEnv(gym.Env):
               d1, t1a]
 
         info = dict()
-        return np.array(ob), reward, done, info 
+        return np.array(ob, dtype=np.float64), reward, done, info 
 
         
     def reset(self): 
         self.render_init = False
 
-        self.player = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # x, y, v_x, v_y, a_x, a_y, phi, omega
-        self.target_1 = [0.0, 0.0] #(x, y) - player position (v_x, v_y) - velocity (a_x, a_y) - acceleration
-        self.target_2 = [0.0, 0,0] # phi - player direction angle (from Ox), omega - angular velocity (d(phi)/ dt) 
+        self.player = np.zeros(8)   #  x, y, v_x, v_y, a_x, a_y, phi, omega
+        self.target_1 = np.zeros(2) # (x, y) - player position (v_x, v_y) - velocity (a_x, a_y) - acceleration
+        self.target_2 = np.zeros(2) # phi - player direction angle (from Ox), omega - angular velocity (d(phi)/ dt) 
  
-        rx = self.np_random.random_integers(0, self.world_shape[0],3)
-        ry = self.np_random.random_integers(0, self.world_shape[1],3)
+        rx = self.np_random.random_integers(0, self.world_shape[0], 3)
+        ry = self.np_random.random_integers(0, self.world_shape[1], 3)
 
         self.player[0] = rx[0]
         self.player[1] = ry[0] 
-        self.player[6] = self.np_random.uniform(0.0, 2.0*pi)  
+
+        self.player[6] = self.np_random.uniform(0.0, 2.0*np.pi)  
 
         self.target_1[0] = rx[1]
         self.target_1[1] = ry[1]
@@ -155,11 +178,11 @@ class GatheringGameEnv(gym.Env):
         dx2 = (self.player[0] - self.target_2[0])
         dy2 = (self.player[1] - self.target_2[1])
 
-        d1  = sqrt(dx1*dx1 + dy1*dy1)
-        d2  = sqrt(dx2*dx2 + dy2*dy2)
+        d1  = np.sqrt(dx1*dx1 + dy1*dy1)
+        d2  = np.sqrt(dx2*dx2 + dy2*dy2)
 
-        cpl = cos(self.player[6])
-        spl = sin(self.player[6])
+        cpl = np.cos(self.player[6])
+        spl = np.sin(self.player[6])
 
         t1a = getAngle(cpl, spl, -dx1, -dy1)
         t2a = getAngle(cpl, spl, -dx2, -dy2)
@@ -179,7 +202,7 @@ class GatheringGameEnv(gym.Env):
               d2, t2a,\
               d1, t1a]
 
-        return np.array(ob)
+        return np.asarray(ob, dtype=np.float64)
 
     def render(self, mode='human', close=False):
         if not self.render_init:
@@ -187,8 +210,10 @@ class GatheringGameEnv(gym.Env):
 
         if mode == 'human':
             self.surface.fill((255,255,255))
-            phi = -(180.0/pi)*self.player[6] - 90.0 -180.0
+            
+            phi = -(180.0/np.pi)*self.player[6] - 270.0
             im =  pg.transform.rotate(self.player_sprite, phi)
+
             h = im.get_height()/2.0
             w = im.get_width()/2.0
             im.set_colorkey((0,128,0))
@@ -202,7 +227,7 @@ class GatheringGameEnv(gym.Env):
             self.surface.blit(im, (self.target_1[0]-w, self.target_1[1]-h))
             self.surface.blit(im, (self.target_2[0]-w, self.target_2[1]-h))
 
-            speed_abs = sqrt(self.player[2]*self.player[2]+ self.player[3]*self.player[3])
+            speed_abs = np.sqrt(self.player[2]*self.player[2] + self.player[3]*self.player[3])
             
             text = "score : {}".format(self.score)
             info = self.font.render(text, True, (0,0,0))
